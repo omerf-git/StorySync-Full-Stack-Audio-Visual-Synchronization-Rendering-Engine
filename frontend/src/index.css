@@ -141,9 +141,9 @@ input:focus, textarea:focus {
 
 .image-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(2, 1fr);
   gap: 1rem;
-  margin-top: 1.5rem;
+  margin-top: 1rem;
 }
 
 .image-card {
@@ -152,14 +152,19 @@ input:focus, textarea:focus {
   overflow: hidden;
   cursor: pointer;
   border: 2px solid transparent;
-  transition: all 0.2s ease;
   aspect-ratio: 16/9;
   background: var(--bg-color);
+  /* Initial transition for normal state */
+  transition: border-color 0.2s ease, transform 0.3s ease 0s, z-index 0s ease 0s, box-shadow 0.3s ease 0s;
 }
 
 .image-card:hover {
-  transform: scale(1.02);
   border-color: var(--accent-color);
+  transform: scale(1.15);
+  z-index: 10;
+  box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+  /* 2-second delay before scaling up */
+  transition: border-color 0.2s ease, transform 0.4s ease 2s, z-index 0s ease 2s, box-shadow 0.4s ease 2s;
 }
 
 .image-card img {

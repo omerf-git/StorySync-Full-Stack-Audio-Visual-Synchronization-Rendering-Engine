@@ -139,9 +139,9 @@ const StudioView = ({ sessionId }) => {
   }
 
   return (
-    <div className="card">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-        <h2 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+    <div className="card" style={{ padding: '1rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+        <h2 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}>
           <Video size={24} color="var(--accent-color)" /> Stüdyo
           <span style={{ fontSize: '1rem', color: 'var(--text-muted)', fontWeight: 400 }}>| Parça {data?.index + 1}</span>
         </h2>
@@ -167,9 +167,9 @@ const StudioView = ({ sessionId }) => {
 
       {data && (
         <>
-          <div style={{ backgroundColor: 'var(--bg-color)', padding: '1.5rem', borderRadius: '8px', border: '1px solid var(--border-color)', marginBottom: '2rem' }}>
-            <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Türkçe Çeviri:</div>
-            <p style={{ fontSize: '1.25rem', fontWeight: 600, lineHeight: 1.6, marginBottom: '0.75rem', color: 'var(--text-color)' }}>
+          <div style={{ backgroundColor: 'var(--bg-color)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--border-color)', marginBottom: '1rem' }}>
+            <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Türkçe Çeviri:</div>
+            <p style={{ fontSize: '1.15rem', fontWeight: 600, lineHeight: 1.4, marginBottom: '0.5rem', color: 'var(--text-color)' }}>
               {data.turkish_translation || data.turkish_sum || "Çeviri bulunamadı"}
             </p>
             <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: 0.7 }}>
@@ -178,7 +178,7 @@ const StudioView = ({ sessionId }) => {
             </div>
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
             <h3 style={{ color: 'var(--text-muted)' }}>Bu parça için arka plan seçin:</h3>
             <div style={{ display: 'flex', gap: '0.5rem' }}>
               <button

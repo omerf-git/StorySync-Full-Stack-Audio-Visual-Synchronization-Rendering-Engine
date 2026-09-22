@@ -176,12 +176,12 @@ async def get_session_images(session_id: str, more: bool = False):
         current_offset = session["image_offset"].get(idx, 0)
         
         if more:
-            current_offset += 5
+            current_offset += 4
             if current_offset >= len(cached_images):
                 current_offset = 0 # Loop back to start if we run out
             session["image_offset"][idx] = current_offset
             
-        paginated_images = cached_images[current_offset : current_offset + 5]
+        paginated_images = cached_images[current_offset : current_offset + 4]
         
         # Backward compatibility and new keyword logic
         current_item = json_data[idx]
@@ -222,7 +222,7 @@ async def get_session_images(session_id: str, more: bool = False):
         session["image_cache"][idx] = images
         session["image_offset"][idx] = 0
         
-        paginated_images = images[0:5]
+        paginated_images = images[0:4]
         
         return {
             "status": "success",
