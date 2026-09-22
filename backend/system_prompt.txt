@@ -10,8 +10,8 @@ Segment the provided German documentary text into short, semantically coherent c
 4. Completeness: The entire original text must be processed. No words can be omitted, added, or altered. Keep the punctuation marks at the end of the chunks.
 
 ## METADATA RULES
-- sample_image: Generate a highly descriptive, visually concrete Google Images search keyword in ENGLISH. The keyword must represent the specific chunk while fitting the overall historical/documentary context. Do not use abstract terms.
-- turkish_sum: Provide a precise 6-7 word Turkish summary explaining the specific action or context of that exact chunk.
+- search_keywords: Generate exactly 5 highly descriptive, visually concrete Google Images search keywords in ENGLISH. The keywords must represent the specific chunk while fitting the overall historical/documentary context. Do not use abstract terms. Output as a JSON array of strings.
+- turkish_translation: Provide the complete and accurate Turkish translation of the exact chunk.
 
 ## OUTPUT FORMAT (STRICT JSON SCHEMA)
 You must output ONLY a valid JSON array of objects. NO markdown formatting code blocks. NO conversational text. NO pleasantries. Just the raw JSON array.
@@ -22,8 +22,8 @@ Schema per object:
     "_reasoning": "State the exact WORD count. Explain the natural boundary used to split (e.g., '12 words. Split at the comma after Welt.').",
     "sample_num": <integer starting from 1>,
     "sample_text": "<German chunk text>",
-    "sample_image": "<English keyword search>",
-    "turkish_sum": "<6-7 word Turkish summary>"
+    "search_keywords": ["<English keyword 1>", "<English keyword 2>", "<English keyword 3>", "<English keyword 4>", "<English keyword 5>"],
+    "turkish_translation": "<Complete Turkish translation>"
   }
 ]
 
@@ -36,29 +36,29 @@ Expected Output:
     "_reasoning": "12 words. Split at the comma after Welt to maintain the temporal clause.",
     "sample_num": 1,
     "sample_text": "In der Morgendämmerung der Geschichte, als das Schicksal der westlichen Welt",
-    "sample_image": "ancient dawn sunrise over Mediterranean sea landscape cinematic",
-    "turkish_sum": "Tarihin şafağında batı dünyasının kaderi"
+    "search_keywords": ["ancient dawn sunrise over Mediterranean sea landscape cinematic", "history ancient dawn sunrise dramatic lighting", "mediterranean ancient world origins history", "birth of western civilization ancient dawn", "ancient mediterranean sea history cinematic view"],
+    "turkish_translation": "Tarihin şafağında, batı dünyasının kaderi"
   },
   {
     "_reasoning": "8 words. Split at the comma after stand to complete the relative clause.",
     "sample_num": 2,
     "sample_text": " noch in den fernen Sternen geschrieben stand,",
-    "sample_image": "night sky ancient stars constellations mythological destiny",
-    "turkish_sum": "Uzak yıldızlarda henüz yazılı iken"
+    "search_keywords": ["night sky ancient stars constellations mythological destiny", "ancient mythology starry night sky fate", "constellations night sky historical destiny", "distant stars night sky ancient history", "ancient mythology starry sky destiny"],
+    "turkish_translation": " henüz uzak yıldızlarda yazılı iken,"
   },
   {
     "_reasoning": "14 words. Split at the comma after Zivilisation. Keeps the subject and location perfectly intact.",
     "sample_num": 3,
     "sample_text": " erwuchs zwischen den salzigen Winden des Mittelmeers und den schroffen Felsen der Ägäis eine Zivilisation,",
-    "sample_image": "ancient Greek ruins temple Aegean sea dramatic lighting",
-    "turkish_sum": "Akdeniz ve Ege'de medeniyet doğdu"
+    "search_keywords": ["ancient Greek ruins temple Aegean sea dramatic lighting", "aegean sea rugged cliffs ancient ruins", "ancient civilization mediterranean wind sea", "greek civilization aegean sea rugged rocks", "ancient ruins between sea and mountains"],
+    "turkish_translation": " Akdeniz'in tuzlu rüzgarları ile Ege'nin sarp kayalıkları arasında bir medeniyet doğdu,"
   },
   {
     "_reasoning": "9 words. Split at the period. Completes the sentence.",
     "sample_num": 4,
     "sample_text": " die weit mehr als nur Stein und Mörtel war.",
-    "sample_image": "ancient Greek philosophical gathering Acropolis Athens marble",
-    "turkish_sum": "Taş ve harçtan çok daha fazlasıydı"
+    "search_keywords": ["ancient Greek philosophical gathering Acropolis Athens marble", "ancient greek culture people marble structures", "athens acropolis lively ancient city", "ancient civilization beyond stones and mortar", "ancient historical marble architecture culture"],
+    "turkish_translation": " ki bu sadece taş ve harçtan çok daha fazlasıydı."
   }
 ]
 

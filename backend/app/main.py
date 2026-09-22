@@ -19,11 +19,17 @@ import logging
 load_dotenv()
 
 # Setup Logging
-DEBUG = os.environ.get("DEBUG", "True").lower() in ["true", "1", "yes"]
+# Varsayılan log seviyesi INFO. Detaylı geliştirici logları için .env dosyasına LOG_LEVEL=DEBUG eklenebilir.
+LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO").upper()
+
+# 1. Kök (root) log seviyesini WARNING yaparak 3. parti kütüphanelerin (urllib3, asyncio vb.) gereksiz loglarını susturuyoruz.
 logging.basicConfig(
-    level=logging.DEBUG if DEBUG else logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    level=logging.WARNING,
+    format="%(asctime)s - %(levelname)s - [%(name)s] - %(message)s",
 )
+
+# 2. Kendi uygulamamızın ("app") log seviyesini belirliyoruz.
+logging.getLogger("app").setLevel(getattr(logging, LOG_LEVEL, logging.INFO))
 logger = logging.getLogger(__name__)
 
 # We need to setup gemini at startup
@@ -92,6 +98,7 @@ async def analyze_audio(
             "audio_path": audio_path,
             "image_cache": {},
             "image_offset": {},
+            "keyword_index": {},
             "transcript_words": transcript_words,
             "confirmed": False
         }
@@ -176,21 +183,38 @@ async def get_session_images(session_id: str, more: bool = False):
             
         paginated_images = cached_images[current_offset : current_offset + 5]
         
+        # Backward compatibility and new keyword logic
+        current_item = json_data[idx]
+        keyword_idx = session.setdefault("keyword_index", {}).get(idx, 0)
+        
+        if "search_keywords" in current_item and isinstance(current_item["search_keywords"], list) and len(current_item["search_keywords"]) > 0:
+            keyword_list = current_item["search_keywords"]
+            keyword_used = keyword_list[keyword_idx % len(keyword_list)]
+        else:
+            keyword_used = current_item.get("sample_image") or current_item.get("turkish_translation") or current_item.get("turkish_sum", "")
+            
+        turkish_trans = current_item.get("turkish_translation", current_item.get("turkish_sum", ""))
+
         return {
             "status": "success",
             "index": idx,
-            "keyword_used": json_data[idx].get("sample_image") or json_data[idx].get("turkish_sum") or "",
-            "turkish_sum": json_data[idx].get("turkish_sum", ""),
+            "keyword_used": keyword_used,
+            "turkish_translation": turkish_trans,
             "images": paginated_images,
             "total_cached": len(cached_images)
         }
         
     # Not in cache, perform search
     current_item = json_data[idx]
-    keyword = current_item.get("sample_image")
-    if not keyword:
-        # Fallback to turkish sum or sample text if no image keyword
-        keyword = current_item.get("turkish_sum") or current_item.get("sample_text", "")[:30]
+    keyword_idx = session.setdefault("keyword_index", {}).get(idx, 0)
+    
+    if "search_keywords" in current_item and isinstance(current_item["search_keywords"], list) and len(current_item["search_keywords"]) > 0:
+        keyword_list = current_item["search_keywords"]
+        keyword = keyword_list[keyword_idx % len(keyword_list)]
+    else:
+        keyword = current_item.get("sample_image") or current_item.get("turkish_translation") or current_item.get("turkish_sum") or current_item.get("sample_text", "")[:30]
+        
+    turkish_trans = current_item.get("turkish_translation", current_item.get("turkish_sum", ""))
         
     try:
         images = search_images(keyword)
@@ -204,7 +228,7 @@ async def get_session_images(session_id: str, more: bool = False):
             "status": "success",
             "index": idx,
             "keyword_used": keyword,
-            "turkish_sum": current_item.get("turkish_sum", ""),
+            "turkish_translation": turkish_trans,
             "images": paginated_images,
             "total_cached": len(images)
         }
@@ -281,5 +305,25 @@ async def prev_segment(session_id: str):
         session["current_index"] -= 1
     else:
         return {"status": "success", "message": "Already at the first segment", "index": session["current_index"]}
+        
+    return await get_session_images(session_id)
+
+
+@app.post("/api/session/{session_id}/next_keyword")
+async def next_keyword(session_id: str):
+    if session_id not in sessions:
+        raise HTTPException(status_code=404, detail="Session not found")
+        
+    session = sessions[session_id]
+    idx = session["current_index"]
+    
+    # Increment keyword index
+    current_kw_idx = session.setdefault("keyword_index", {}).get(idx, 0)
+    session["keyword_index"][idx] = current_kw_idx + 1
+    
+    # Reset offset and cache for this index to force fresh search
+    session["image_offset"][idx] = 0
+    if idx in session["image_cache"]:
+        del session["image_cache"][idx]
         
     return await get_session_images(session_id)

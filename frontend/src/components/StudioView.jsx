@@ -34,6 +34,19 @@ const StudioView = ({ sessionId }) => {
     }
   };
 
+  const handleNextKeyword = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const res = await axios.post(`/api/session/${sessionId}/next_keyword`);
+      setData(res.data);
+    } catch (err) {
+      setError(err.response?.data?.detail || 'Farklı kelime ile arama yapılamadı.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchImages();
   }, [sessionId]);
@@ -66,7 +79,7 @@ const StudioView = ({ sessionId }) => {
     if (generating) return;
     setGenerating(true);
     setError('');
-    
+
     try {
       // Create an invisible anchor to download the file directly from the response blob
       const res = await axios.post(`/api/session/${sessionId}/generate_video`, {
@@ -129,10 +142,10 @@ const StudioView = ({ sessionId }) => {
     <div className="card">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
         <h2 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <Video size={24} color="var(--accent-color)" /> Stüdyo 
+          <Video size={24} color="var(--accent-color)" /> Stüdyo
           <span style={{ fontSize: '1rem', color: 'var(--text-muted)', fontWeight: 400 }}>| Parça {data?.index + 1}</span>
         </h2>
-        
+
         <div style={{ display: 'flex', gap: '0.5rem' }}>
           <button className="secondary" onClick={handlePrev} disabled={loading || generating || data?.index === 0}>
             <ChevronLeft size={20} /> Önceki
@@ -156,24 +169,45 @@ const StudioView = ({ sessionId }) => {
         <>
           <div style={{ backgroundColor: 'var(--bg-color)', padding: '1.5rem', borderRadius: '8px', border: '1px solid var(--border-color)', marginBottom: '2rem' }}>
             <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Türkçe Çeviri:</div>
-            <p style={{ fontSize: '1.125rem', fontWeight: 500, lineHeight: 1.6 }}>
-              {data.turkish_sum || data.keyword_used}
+            <p style={{ fontSize: '1.25rem', fontWeight: 600, lineHeight: 1.6, marginBottom: '0.75rem', color: 'var(--text-color)' }}>
+              {data.turkish_translation || data.turkish_sum || "Çeviri bulunamadı"}
             </p>
+            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: 0.7 }}>
+              <span>Arama Terimi:</span>
+              <span style={{ fontStyle: 'italic' }}>{data.keyword_used}</span>
+            </div>
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
             <h3 style={{ color: 'var(--text-muted)' }}>Bu parça için arka plan seçin:</h3>
-            {data.total_cached > 5 && (
-              <button className="secondary" onClick={handleMoreImages} disabled={loading || generating} style={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}>
-                Farklı Görseller Getir
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button
+                className="secondary"
+                onClick={handleNextKeyword}
+                disabled={loading || generating}
+                style={{ padding: '0.5rem', fontSize: '1.2rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                title="Oluşturulan farklı bir anahtar kelime ile arama yap"
+              >
+                🔑
               </button>
-            )}
+              {data.total_cached > 5 && (
+                <button
+                  className="secondary"
+                  onClick={handleMoreImages}
+                  disabled={loading || generating}
+                  style={{ padding: '0.5rem', fontSize: '1.2rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  title="Aynı anahtar kelime ile farklı görseller getir"
+                >
+                  🔄
+                </button>
+              )}
+            </div>
           </div>
-          
+
           {loading ? (
-             <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem 0' }}>
-               <Loader2 className="spinner" size={32} color="var(--accent-color)" />
-             </div>
+            <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem 0' }}>
+              <Loader2 className="spinner" size={32} color="var(--accent-color)" />
+            </div>
           ) : (
             <div className="image-grid">
               {data.images.map((img, idx) => (
