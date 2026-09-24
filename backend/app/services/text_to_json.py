@@ -1,19 +1,18 @@
 import os
 import json
 from dotenv import load_dotenv
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 
 load_dotenv()
 
 def setup_gemini_api():
     """
-    Retrieves the API key from environment variables and configures Gemini.
+    Retrieves the API key from environment variables.
     """
     api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:
         raise ValueError("Please set the GEMINI_API_KEY environment variable.")
-    
-    genai.configure(api_key=api_key)
 
 def generate_json_from_text(system_prompt_path, text):
     # 1. Read system prompt
@@ -22,44 +21,44 @@ def generate_json_from_text(system_prompt_path, text):
 
     # Fallback list of models (user requested list)
     fallback_models = [
-        "gemini-3.7-flash",
+        # 1. En Güncel ve En Yetenekli Flash Modelleri (Yoğunluk anında geçici hata verebilir ama ilk tercihler)
         "gemini-3.8-flash",
-        "gemini-3.5-flash",
-        "gemini-3.6-flash",
+        "gemini-3.7-flash",
+        "gemini-3.6-flash",  # Testinizde direkt çalıştı
+        "gemini-3.5-flash",  # Testinizde direkt çalıştı
+        # 2. Dinamik "Latest" Modelleri (Google tarafında en güncel kararlı sürüme yönlendirir)
+        "gemini-flash-latest",
+        # 3. Yüksek Hızlı / Hafif Modeller (JSON çıkarma işlerinde çok hızlı ve etkilidir)
         "gemini-3.5-flash-lite",
-        "gemini-3.1-flash-lite",
-        "gemini-3-flash",
-        "gemini-2-flash",
-        "gemini-2-flash-lite",
-        "gemini-2.5-flash",
-        "gemini-2.5-flash-lite",
-        "gemini-2.5-pro",
-        "gemini-3.1-pro",        
+        "gemini-3.1-flash-lite",  # Testinizde direkt çalıştı
+        "gemini-3.1-flash-lite-preview",
+        "gemini-flash-lite-latest",
+        # 4. Temel Önizleme ve Açık Ağırlıklı Alternatifler (Gerekirse en son fallback)
+        "gemini-3-flash-preview",  # Testinizde direkt çalıştı (Adı preview olarak güncellendi)
+        # "gemma-4-31b-it",  # Güçlü açık model yedeği
+        # "gemma-4-26b-a4b-it",  # Testinizde direkt çalıştı
     ]
     
-    import google.api_core.retry
-    
+    client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
     last_exception = None
     
     for model_name in fallback_models:
         print(f"Trying model: {model_name}...")
         try:
-            # 2. Initialize Gemini model
-            model = genai.GenerativeModel(
-                model_name=model_name,
+            # 2. Configure generation settings
+            config = types.GenerateContentConfig(
                 system_instruction=system_instruction,
-                generation_config=genai.GenerationConfig(
-                    temperature=0.1,  
-                    top_p=0.8,        
-                    top_k=40,
-                    response_mime_type="application/json",
-                )
+                temperature=0.1,  
+                top_p=0.8,        
+                top_k=40,
+                response_mime_type="application/json",
             )
 
-            # 3. Send text to model (disable auto-retries to prevent quota spikes on 429)
-            response = model.generate_content(
-                text, 
-                request_options={"retry": google.api_core.retry.Retry(initial=0, maximum=0, multiplier=1.0, deadline=10.0, predicate=lambda e: False)}
+            # 3. Send text to model 
+            response = client.models.generate_content(
+                model=model_name,
+                contents=text,
+                config=config
             )
             
             # 4. Parse and return response

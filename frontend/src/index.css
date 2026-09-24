@@ -28,7 +28,7 @@ body {
 .container {
   max-width: 1000px;
   margin: 0 auto;
-  padding: 2rem;
+  padding: 1rem 2rem;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -160,7 +160,7 @@ input:focus, textarea:focus {
 
 .image-card:hover {
   border-color: var(--accent-color);
-  transform: scale(1.15);
+  transform: scale(1.25);
   z-index: 10;
   box-shadow: 0 15px 40px rgba(0,0,0,0.6);
   /* 2-second delay before scaling up */
@@ -193,8 +193,8 @@ input:focus, textarea:focus {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 2rem;
-  padding-bottom: 1rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
   border-bottom: 1px solid var(--border-color);
 }
 

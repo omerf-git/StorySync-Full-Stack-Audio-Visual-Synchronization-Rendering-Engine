@@ -147,6 +147,20 @@ async def confirm_session(session_id: str, req: ConfirmSessionRequest):
         "message": "Timestamps confirmed. Session is ready."
     }
 
+@app.get("/api/session/{session_id}")
+async def get_session(session_id: str):
+    if session_id not in sessions:
+        raise HTTPException(status_code=404, detail="Session not found")
+        
+    session = sessions[session_id]
+    return {
+        "status": "success",
+        "session_id": session_id,
+        "json_data": session["json_data"],
+        "transcript_words": session["transcript_words"],
+        "confirmed": session.get("confirmed", False)
+    }
+
 
 
 @app.get("/api/session/{session_id}/images")

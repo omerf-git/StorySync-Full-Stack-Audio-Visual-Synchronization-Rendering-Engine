@@ -15,7 +15,12 @@ WATERMARK_BLACKLIST = [
     "123rf",
     "pond5",
     "as2.ftcdn",
-    "vecteezy"
+    "vecteezy",
+    "bigstockphoto",
+    "as1.ftcdn",
+    "stock.adobe.com",
+    "media.istockphoto.com",
+    "www.gettyimages.com"
 ]
 
 def check_image_url(img):
