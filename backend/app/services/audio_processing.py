@@ -118,6 +118,40 @@ def evaluate_timestamps(data, transcript_words):
                 mid_point = (current_end + next_start) / 2.0
                 current_item['end_time'] = round(mid_point, 2)
                 next_item['start_time'] = round(mid_point, 2)
+    
+    # --- FRAME-ALIGNED TIMESTAMP SNAPPING ---
+    # Video 30 FPS → süre sadece 1/30 saniye (33.3ms) katlarından oluşabilir.
+    # Eğer start_time ve end_time 1/30 katı değilse, video track sesten kısa/uzun kalır.
+    # Bu fark her segmentte birikir ve CapCut'ta kayma oluşturur.
+    # ÇÖZÜM: Tüm zaman damgalarını 1/30'un en yakın katına hizala.
+    # Ardışık segmentler aynı sınır noktasını paylaştığı için boşluk/bindirme olmaz.
+    fps = 30.0
+    frame_dur = 1.0 / fps
+    
+    for i, item in enumerate(data):
+        if 'start_time' in item and 'end_time' in item:
+            # start_time'ı en yakın frame sınırına hizala
+            snapped_start = round(item['start_time'] / frame_dur) * frame_dur
+            snapped_start = round(snapped_start, 4)
+            
+            # end_time'ı en yakın frame sınırına hizala
+            snapped_end = round(item['end_time'] / frame_dur) * frame_dur
+            snapped_end = round(snapped_end, 4)
+            
+            # Sürenin en az 1 frame olduğundan emin ol
+            if snapped_end <= snapped_start:
+                snapped_end = snapped_start + frame_dur
+            
+            item['start_time'] = snapped_start
+            item['end_time'] = snapped_end
+    
+    # Ardışık segmentlerin sınırlarını eşitle (snap sonrası oluşabilecek küçük farkları düzelt)
+    for i in range(len(data) - 1):
+        current_item = data[i]
+        next_item = data[i+1]
+        if 'end_time' in current_item and 'start_time' in next_item:
+            # Bir öncekinin bitişini, bir sonrakinin başlangıcına eşitle
+            next_item['start_time'] = current_item['end_time']
                 
     return data
 

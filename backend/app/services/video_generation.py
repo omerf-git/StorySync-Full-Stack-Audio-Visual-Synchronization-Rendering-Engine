@@ -159,6 +159,9 @@ def create_segment_video(json_item, audio_path, image_path, ken_burns=False, zoo
     temp_out_path = os.path.join(temp_dir, temp_out_filename)
     
     try:
+        # KESİN ÇÖZÜM: Ken burns'ü fonksiyonun en tepesinde her ihtimale karşı False yapıyoruz
+        ken_burns = False
+        
         if ken_burns:
             # Determine image dimensions
             img = cv2.imread(image_path)
@@ -213,30 +216,59 @@ def create_segment_video(json_item, audio_path, image_path, ken_burns=False, zoo
                 raise RuntimeError(f"FFmpeg audio merge error:\n{result.stderr[-1000:]}")
             
         else:
-            # If Ken Burns is disabled: Directly convert static image to video with ffmpeg and merge with audio
+            # ── Frame-Aligned Duration ──
+            # audio_processing.py'de tüm start_time/end_time değerleri 1/30 katına
+            # hizalandığı için duration zaten tam bir frame katıdır.
+            # round() ile küçük kayan nokta hatalarını düzeltiyoruz.
+            exact_frames = round(duration * 30)
+            aligned_duration = exact_frames / 30.0
+            
+            # ── ADIM 1: Sesi frame-aligned sürede WAV'a çıkar ──
+            temp_wav_filename = f"temp_audio_{uuid.uuid4().hex[:8]}.wav"
+            temp_wav_path = os.path.join(temp_dir, temp_wav_filename)
+            
+            wav_cmd = [
+                'ffmpeg', '-y',
+                '-i', audio_path,
+                '-ss', str(start_time),
+                '-t', str(aligned_duration),
+                '-acodec', 'pcm_s16le',
+                '-ar', '44100',
+                '-ac', '2',
+                temp_wav_path
+            ]
+            result = subprocess.run(wav_cmd, capture_output=True, text=True)
+            if result.returncode != 0:
+                raise RuntimeError(f"FFmpeg WAV extraction error:\n{result.stderr[-1000:]}")
+            
+            # ── ADIM 2: WAV + sabit görsel → MP4 ──
             cmd = [
                 'ffmpeg', '-y',
                 '-loop', '1',
                 '-framerate', '30',
                 '-i', image_path,
-                '-ss', str(start_time),
-                '-t', str(duration),
-                '-i', audio_path,
+                '-i', temp_wav_path,
                 '-map', '0:v',
                 '-map', '1:a',
+                '-vf', 'scale=trunc(iw/2)*2:trunc(ih/2)*2',
                 '-c:v', 'libx264',
                 '-preset', 'fast',
                 '-crf', '18',
                 '-pix_fmt', 'yuv420p',
                 '-c:a', 'aac',
                 '-b:a', '192k',
-                '-t', str(duration),
+                '-frames:v', str(exact_frames),
+                '-t', str(aligned_duration),
                 temp_out_path
             ]
             
             result = subprocess.run(cmd, capture_output=True, text=True)
             if result.returncode != 0:
                 raise RuntimeError(f"FFmpeg (Static Image) error:\n{result.stderr[-1000:]}")
+            
+            # WAV geçici dosyasını temizle
+            if os.path.exists(temp_wav_path):
+                os.remove(temp_wav_path)
             
     finally:
         # Clean up temporary video file if created to avoid inflating disk space
@@ -288,33 +320,33 @@ def create_segment_from_url(json_item, audio_path, image_url, ken_burns=False, z
         if os.path.exists(temp_image_path):
             os.remove(temp_image_path)
 
-if __name__ == "__main__":
-    import json
+# if __name__ == "__main__":
+#     import json
     
-    # Test block (To be commented out later)
-    try:
-        print("Reading JSON data...")
-        with open("output_with_timestamps.json", "r", encoding="utf-8") as f:
-            data = json.load(f)
+#     # Test block (To be commented out later)
+#     try:
+#         print("Reading JSON data...")
+#         with open("output_with_timestamps.json", "r", encoding="utf-8") as f:
+#             data = json.load(f)
             
-        # Element at index 1 (0th index is the first element)
-        first_item = data[0] 
+#         # Element at index 1 (0th index is the first element)
+#         first_item = data[0] 
         
-        print(f"Starting test. Processing audio range: {first_item.get('start_time')}s - {first_item.get('end_time')}s")
+#         print(f"Starting test. Processing audio range: {first_item.get('start_time')}s - {first_item.get('end_time')}s")
         
-        video_bytes = create_segment_video(
-            json_item=first_item, 
-            audio_path="leaonidasilk4.mp3", 
-            image_path="downloaded_images/sample1_image3.jpg", 
-            ken_burns=True,
-            zoom_direction="in"
-        )
+#         video_bytes = create_segment_video(
+#             json_item=first_item, 
+#             audio_path="leaonidasilk4.mp3", 
+#             image_path="downloaded_images/sample1_image3.jpg", 
+#             ken_burns=True,
+#             zoom_direction="in"
+#         )
         
-        output_path = "test_output.mp4"
-        with open(output_path, "wb") as f:
-            f.write(video_bytes)
+#         output_path = "test_output.mp4"
+#         with open(output_path, "wb") as f:
+#             f.write(video_bytes)
             
-        print(f"Success! Video received as bytes and saved to '{output_path}'.")
+#         print(f"Success! Video received as bytes and saved to '{output_path}'.")
         
-    except Exception as e:
-        print(f"Error occurred: {e}")
+#     except Exception as e:
+#         print(f"Error occurred: {e}")

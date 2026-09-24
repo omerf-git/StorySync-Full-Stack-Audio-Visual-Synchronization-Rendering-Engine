@@ -274,7 +274,7 @@ async def generate_video(session_id: str, req: VideoGenerationRequest):
             json_item=current_item,
             audio_path=audio_path,
             image_url=req.image_url,
-            ken_burns=req.ken_burns,
+            ken_burns=False, # Devre dışı bırakıldı (kullanıcı talebi: sadece sabit görsel + ses)
             zoom_direction=req.zoom_direction
         )
         
