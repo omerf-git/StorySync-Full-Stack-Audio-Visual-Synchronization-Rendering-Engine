@@ -62,7 +62,7 @@ class ConfirmSessionRequest(BaseModel):
     transcript_words: list
 
 @app.post("/api/analyze")
-async def analyze_audio(
+def analyze_audio(
     text: str = Form(...),
     system_prompt_path: str = Form("system_prompt.txt"),
     audio: UploadFile = File(...)
@@ -117,7 +117,7 @@ async def analyze_audio(
         raise HTTPException(status_code=500, detail="Metin/Ses analizi sırasında beklenmeyen bir hata oluştu. Lütfen logları kontrol edin.")
 
 @app.post("/api/session/{session_id}/confirm")
-async def confirm_session(session_id: str, req: ConfirmSessionRequest):
+def confirm_session(session_id: str, req: ConfirmSessionRequest):
     if session_id not in sessions:
         raise HTTPException(status_code=404, detail="Session not found")
         
@@ -148,7 +148,7 @@ async def confirm_session(session_id: str, req: ConfirmSessionRequest):
     }
 
 @app.get("/api/session/{session_id}")
-async def get_session(session_id: str):
+def get_session(session_id: str):
     if session_id not in sessions:
         raise HTTPException(status_code=404, detail="Session not found")
         
@@ -164,7 +164,7 @@ async def get_session(session_id: str):
 
 
 @app.get("/api/session/{session_id}/images")
-async def get_session_images(session_id: str, more: bool = False):
+def get_session_images(session_id: str, more: bool = False):
     if session_id not in sessions:
         raise HTTPException(status_code=404, detail="Session not found")
         
@@ -252,7 +252,7 @@ async def get_session_images(session_id: str, more: bool = False):
 
 
 @app.post("/api/session/{session_id}/generate_video")
-async def generate_video(session_id: str, req: VideoGenerationRequest):
+def generate_video(session_id: str, req: VideoGenerationRequest):
     if session_id not in sessions:
         raise HTTPException(status_code=404, detail="Session not found")
         
@@ -296,7 +296,7 @@ async def generate_video(session_id: str, req: VideoGenerationRequest):
 
 
 @app.post("/api/session/{session_id}/next")
-async def next_segment(session_id: str):
+def next_segment(session_id: str):
     if session_id not in sessions:
         raise HTTPException(status_code=404, detail="Session not found")
         
@@ -306,11 +306,11 @@ async def next_segment(session_id: str):
     else:
         return {"status": "success", "message": "Already at the last segment", "index": session["current_index"]}
         
-    return await get_session_images(session_id)
+    return get_session_images(session_id)
 
 
 @app.post("/api/session/{session_id}/prev")
-async def prev_segment(session_id: str):
+def prev_segment(session_id: str):
     if session_id not in sessions:
         raise HTTPException(status_code=404, detail="Session not found")
         
@@ -320,11 +320,10 @@ async def prev_segment(session_id: str):
     else:
         return {"status": "success", "message": "Already at the first segment", "index": session["current_index"]}
         
-    return await get_session_images(session_id)
-
+    return get_session_images(session_id)
 
 @app.post("/api/session/{session_id}/next_keyword")
-async def next_keyword(session_id: str):
+def next_keyword(session_id: str):
     if session_id not in sessions:
         raise HTTPException(status_code=404, detail="Session not found")
         
@@ -340,4 +339,4 @@ async def next_keyword(session_id: str):
     if idx in session["image_cache"]:
         del session["image_cache"][idx]
         
-    return await get_session_images(session_id)
+    return get_session_images(session_id)

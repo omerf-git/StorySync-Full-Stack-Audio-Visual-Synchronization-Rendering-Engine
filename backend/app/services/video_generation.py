@@ -237,9 +237,13 @@ def create_segment_video(json_item, audio_path, image_path, ken_burns=False, zoo
                 '-ac', '2',
                 temp_wav_path
             ]
-            result = subprocess.run(wav_cmd, capture_output=True, text=True)
-            if result.returncode != 0:
-                raise RuntimeError(f"FFmpeg WAV extraction error:\n{result.stderr[-1000:]}")
+            try:
+                result = subprocess.run(wav_cmd, capture_output=True, text=True, timeout=15)
+                if result.returncode != 0:
+                    raise RuntimeError(f"FFmpeg WAV extraction error:\n{result.stderr[-1000:]}")
+            except subprocess.TimeoutExpired:
+                subprocess.run(['pkill', '-f', temp_wav_path])
+                raise RuntimeError("Ses çıkarma işlemi zaman aşımına uğradı.")
             
             # ── ADIM 2: WAV + sabit görsel → MP4 ──
             cmd = [
@@ -262,9 +266,13 @@ def create_segment_video(json_item, audio_path, image_path, ken_burns=False, zoo
                 temp_out_path
             ]
             
-            result = subprocess.run(cmd, capture_output=True, text=True)
-            if result.returncode != 0:
-                raise RuntimeError(f"FFmpeg (Static Image) error:\n{result.stderr[-1000:]}")
+            try:
+                result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+                if result.returncode != 0:
+                    raise RuntimeError(f"FFmpeg (Static Image) error:\n{result.stderr[-1000:]}")
+            except subprocess.TimeoutExpired:
+                proc_kill = subprocess.run(['pkill', '-f', temp_out_path]) # Try to clean up stuck process
+                raise RuntimeError("FFmpeg işlemi çok uzun sürdü ve zaman aşımına uğradı. Görsel formatı desteklenmiyor olabilir.")
             
             # WAV geçici dosyasını temizle
             if os.path.exists(temp_wav_path):

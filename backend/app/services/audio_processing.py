@@ -4,6 +4,7 @@ import whisper
 import difflib
 import string
 import re
+import subprocess
 
 def clean_text(text):
     """
@@ -155,9 +156,31 @@ def evaluate_timestamps(data, transcript_words):
                 
     return data
 
+def get_audio_duration(audio_path):
+    cmd = ['ffprobe', '-v', 'error', '-show_entries', 'format=duration', '-of', 'default=noprint_wrappers=1:nokey=1', audio_path]
+    result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+    try:
+        return float(result.stdout.strip())
+    except Exception:
+        return None
+
 def process_audio_timestamps(data, audio_path, model_name="small", min_match=0.6):
     transcript_words = get_transcript_words(audio_path, model_name)
     data = evaluate_timestamps(data, transcript_words)
+    
+    # --- SON SEGMENTİ SES DOSYASININ SONUNA KADAR UZAT ---
+    # Orijinal ses dosyasındaki son sessizliğin de (varsa) son videoya dahil edilmesi
+    total_duration = get_audio_duration(audio_path)
+    if total_duration and len(data) > 0:
+        last_item = data[-1]
+        if 'end_time' in last_item:
+            fps = 30.0
+            frame_dur = 1.0 / fps
+            # Tam ses süresini yine video kare kuralına (1/30s) hizalıyoruz ki kayma olmasın
+            snapped_duration = round(round(total_duration / frame_dur) * frame_dur, 4)
+            # Eğer hesaplanan süre başlangıçtan büyükse son videonun bitişini uzat
+            if snapped_duration > last_item.get('start_time', 0):
+                last_item['end_time'] = snapped_duration
     
     for item in data:
         if item.get('match_ratio', 0) < min_match or item.get('match_status') == 3:
