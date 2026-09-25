@@ -1,0 +1,47 @@
+# ============================================================
+# Docker Compose - CPU Only (GPU olmayan makineler için)
+# ============================================================
+# Kullanım:
+#   docker compose -f docker-compose.cpu.yml up -d --build
+#
+# Gereksinimler:
+#   - Docker Engine 24+
+#   - NVIDIA GPU gerekmez, Whisper CPU modunda çalışır
+#
+# NOT: CPU modunda Whisper ~3-5x daha yavaş çalışır ama
+#      tüm fonksiyonlar sorunsuz çalışmaya devam eder.
+# ============================================================
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: google-images-to-video
+    restart: unless-stopped
+
+    ports:
+      - "80:80"
+
+    # GPU YOK - deploy bloğu olmadan çalışır
+
+    # Whisper'ı CPU moduna zorla
+    environment:
+      - CUDA_VISIBLE_DEVICES=""
+    
+    env_file:
+      - backend/.env
+
+    volumes:
+      - whisper-cache:/app/.cache
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/"]
+      interval: 30s
+      timeout: 5s
+      start_period: 60s
+      retries: 3
+
+volumes:
+  whisper-cache:
+    driver: local

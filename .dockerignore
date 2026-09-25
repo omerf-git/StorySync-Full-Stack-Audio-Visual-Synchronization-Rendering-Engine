@@ -1,0 +1,29 @@
+# ── Python / Backend ──
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.eggs/
+
+# ── Node / Frontend (build sırasında tekrar kurulacak) ──
+frontend/node_modules/
+frontend/dist/
+
+# ── IDE / Editor ──
+.vscode/
+.idea/
+*.sw?
+.DS_Store
+
+# ── Git ──
+.git/
+.gitignore
+
+# ── Guides (uygulamaya dahil etmeye gerek yok) ──
+frontend_guide.md
+backend/backend_guide.md
+
+# ── Logs / Temp ──
+*.log
+tmp/

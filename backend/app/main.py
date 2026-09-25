@@ -41,6 +41,10 @@ app = FastAPI(title="Google Images to Video Backend")
 def read_root():
     return RedirectResponse(url="/docs")
 
+@app.get("/api/session/healthcheck")
+def healthcheck():
+    return {"status": "ok"}
+
 # In-memory session store
 # sessions[session_id] = {
 #     "json_data": list,

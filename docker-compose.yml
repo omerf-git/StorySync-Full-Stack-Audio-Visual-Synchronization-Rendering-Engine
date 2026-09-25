@@ -1,0 +1,57 @@
+# ============================================================
+# Docker Compose - NVIDIA GPU Destekli
+# ============================================================
+# Kullanım:
+#   docker compose up -d --build
+#
+# Gereksinimler:
+#   - Docker Engine 24+
+#   - NVIDIA Container Toolkit (nvidia-docker2)
+#   - NVIDIA GPU sürücüsü yüklü olmalı
+# ============================================================
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: google-images-to-video
+    restart: unless-stopped
+
+    ports:
+      - "80:80"     # Tarayıcıdan http://localhost ile erişim
+
+    # ── NVIDIA GPU Erişimi ──
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1           # Tek GPU yeterli
+              capabilities: [gpu]
+
+    # ── Ortam Değişkenleri ──
+    # Yöntem 1: .env dosyasından oku
+    env_file:
+      - backend/.env
+
+    # Yöntem 2: Doğrudan tanımla (isteğe bağlı, .env dosyası yoksa)
+    # environment:
+    #   - GEMINI_API_KEY=your_key_here
+    #   - SERPER_API_KEY=your_key_here
+
+    # ── Volume: Whisper model cache'i (her build'de tekrar indirmeyi önler) ──
+    volumes:
+      - whisper-cache:/app/.cache
+
+    # Sağlık kontrolü
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/"]
+      interval: 30s
+      timeout: 5s
+      start_period: 60s
+      retries: 3
+
+volumes:
+  whisper-cache:
+    driver: local
