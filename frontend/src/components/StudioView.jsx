@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { ChevronRight, ChevronLeft, Video, Loader2, Download } from 'lucide-react';
 
-const StudioView = ({ sessionId }) => {
+const StudioView = ({ sessionId, language = 'en' }) => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
@@ -131,9 +131,9 @@ const StudioView = ({ sessionId }) => {
   if (data?.status === 'completed') {
     return (
       <div className="card" style={{ textAlign: 'center', padding: '4rem 2rem' }}>
-        <h2 style={{ color: 'var(--success-color)' }}>Congratulations!</h2>
+        <h2 style={{ color: 'var(--success-color)' }}>{language === 'tr' ? 'Tebrikler!' : 'Congratulations!'}</h2>
         <p style={{ marginTop: '1rem', color: 'var(--text-muted)' }}>{data.message}</p>
-        <p style={{ marginTop: '0.5rem' }}>You can combine the downloaded MP4 files in your video editor to complete your documentary.</p>
+        <p style={{ marginTop: '0.5rem' }}>{language === 'tr' ? 'İndirilen MP4 dosyalarını video düzenleyicinizde birleştirerek belgeselinizi tamamlayabilirsiniz.' : 'You can combine the downloaded MP4 files in your video editor to complete your documentary.'}</p>
       </div>
     );
   }
@@ -142,16 +142,16 @@ const StudioView = ({ sessionId }) => {
     <div className="card" style={{ padding: '1rem' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
         <h2 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}>
-          <Video size={24} color="var(--accent-color)" /> Studio
-          <span style={{ fontSize: '1rem', color: 'var(--text-muted)', fontWeight: 400 }}>| Segment {data?.index + 1}</span>
+          <Video size={24} color="var(--accent-color)" /> Stüdyo
+          <span style={{ fontSize: '1rem', color: 'var(--text-muted)', fontWeight: 400 }}>| {language === 'tr' ? 'Parça' : 'Segment'} {data?.index + 1}</span>
         </h2>
 
         <div style={{ display: 'flex', gap: '0.5rem' }}>
           <button className="secondary" onClick={handlePrev} disabled={loading || generating || data?.index === 0}>
-            <ChevronLeft size={20} /> Previous
+            <ChevronLeft size={20} /> {language === 'tr' ? 'Önceki' : 'Previous'}
           </button>
           <button className="secondary" onClick={handleNext} disabled={loading || generating}>
-            Next <ChevronRight size={20} />
+            {language === 'tr' ? 'Sonraki' : 'Next'} <ChevronRight size={20} />
           </button>
         </div>
       </div>
@@ -161,32 +161,34 @@ const StudioView = ({ sessionId }) => {
       {generating && (
         <div style={{ backgroundColor: 'rgba(201, 154, 76, 0.1)', border: '1px solid var(--accent-color)', padding: '1rem', borderRadius: '8px', marginBottom: '2rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <Loader2 className="spinner" color="var(--accent-color)" />
-          <span>Video is being generated in the background, please wait... It will download automatically when complete.</span>
+          <span>{language === 'tr' ? 'Video arka planda oluşturuluyor, lütfen bekleyin... Tamamlandığında otomatik olarak indirilecektir.' : 'Video is being generated in the background, please wait... It will download automatically when complete.'}</span>
         </div>
       )}
 
       {data && (
         <>
           <div style={{ backgroundColor: 'var(--bg-color)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--border-color)', marginBottom: '1rem' }}>
-            <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Translation:</div>
+            <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>{language === 'tr' ? 'Çeviri:' : 'Translation:'}</div>
             <p style={{ fontSize: '1.15rem', fontWeight: 600, lineHeight: 1.4, marginBottom: '0.5rem', color: 'var(--text-color)' }}>
-              {data.english_translation || data.english_sum || "No translation found"}
+              {language === 'tr' 
+                ? (data.turkish_translation || data.turkish_sum || "Çeviri bulunamadı") 
+                : (data.english_translation || data.english_sum || "No translation found")}
             </p>
             <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: 0.7 }}>
-              <span>Search Keyword:</span>
+              <span>{language === 'tr' ? 'Arama Anahtar Kelimesi:' : 'Search Keyword:'}</span>
               <span style={{ fontStyle: 'italic' }}>{data.keyword_used}</span>
             </div>
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-            <h3 style={{ color: 'var(--text-muted)' }}>Select a background for this segment:</h3>
+            <h3 style={{ color: 'var(--text-muted)' }}>{language === 'tr' ? 'Bu parça için bir arka plan seçin:' : 'Select a background for this segment:'}</h3>
             <div style={{ display: 'flex', gap: '0.5rem' }}>
               <button
                 className="secondary"
                 onClick={handleNextKeyword}
                 disabled={loading || generating}
                 style={{ padding: '0.5rem', fontSize: '1.2rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                title="Search with a different generated keyword"
+                title={language === 'tr' ? 'Oluşturulan farklı bir anahtar kelime ile ara' : 'Search with a different generated keyword'}
               >
                 🔑
               </button>
@@ -196,7 +198,7 @@ const StudioView = ({ sessionId }) => {
                   onClick={handleMoreImages}
                   disabled={loading || generating}
                   style={{ padding: '0.5rem', fontSize: '1.2rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                  title="Fetch more images with the same keyword"
+                  title={language === 'tr' ? 'Aynı anahtar kelimeyle daha fazla görsel getir' : 'Fetch more images with the same keyword'}
                 >
                   🔄
                 </button>
@@ -221,7 +223,7 @@ const StudioView = ({ sessionId }) => {
               ))}
               {data.images.length === 0 && (
                 <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
-                  No image found. Please check the keyword.
+                  {language === 'tr' ? 'Görsel bulunamadı. Lütfen anahtar kelimeyi kontrol edin.' : 'No image found. Please check the keyword.'}
                 </div>
               )}
             </div>

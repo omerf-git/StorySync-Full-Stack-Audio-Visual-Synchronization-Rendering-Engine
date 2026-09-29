@@ -12,6 +12,7 @@ Segment the provided German documentary text into short, semantically coherent c
 ## METADATA RULES
 - search_keywords: Generate exactly 5 highly descriptive, visually concrete Google Images search keywords in ENGLISH. The keywords must represent the specific chunk while fitting the overall historical/documentary context. Do not use abstract terms. Output as a JSON array of strings.
 - english_translation: Provide the complete and accurate English translation of the exact chunk.
+- turkish_translation: Provide the complete and accurate Turkish translation of the exact chunk.
 
 ## OUTPUT FORMAT (STRICT JSON SCHEMA)
 You must output ONLY a valid JSON array of objects. NO markdown formatting code blocks. NO conversational text. NO pleasantries. Just the raw JSON array.
@@ -23,7 +24,8 @@ Schema per object:
     "sample_num": <integer starting from 1>,
     "sample_text": "<German chunk text>",
     "search_keywords": ["<English keyword 1>", "<English keyword 2>", "<English keyword 3>", "<English keyword 4>", "<English keyword 5>"],
-    "english_translation": "<Complete English translation>"
+    "english_translation": "<Complete English translation>",
+    "turkish_translation": "<Complete Turkish translation>"
   }
 ]
 
@@ -37,28 +39,32 @@ Expected Output:
     "sample_num": 1,
     "sample_text": "In der Morgendämmerung der Geschichte, als das Schicksal der westlichen Welt",
     "search_keywords": ["ancient dawn sunrise over Mediterranean sea landscape cinematic", "history ancient dawn sunrise dramatic lighting", "mediterranean ancient world origins history", "birth of western civilization ancient dawn", "ancient mediterranean sea history cinematic view"],
-    "english_translation": "At the dawn of history, when the destiny of the western world"
+    "english_translation": "At the dawn of history, when the destiny of the western world",
+    "turkish_translation": "Tarihin şafağında, batı dünyasının kaderi"
   },
   {
     "_reasoning": "8 words. Split at the comma after stand to complete the relative clause.",
     "sample_num": 2,
     "sample_text": " noch in den fernen Sternen geschrieben stand,",
     "search_keywords": ["night sky ancient stars constellations mythological destiny", "ancient mythology starry night sky fate", "constellations night sky historical destiny", "distant stars night sky ancient history", "ancient mythology starry sky destiny"],
-    "english_translation": " was still written in the distant stars,"
+    "english_translation": " was still written in the distant stars,",
+    "turkish_translation": " henüz uzak yıldızlarda yazılı iken,"
   },
   {
     "_reasoning": "14 words. Split at the comma after Zivilisation. Keeps the subject and location perfectly intact.",
     "sample_num": 3,
     "sample_text": " erwuchs zwischen den salzigen Winden des Mittelmeers und den schroffen Felsen der Ägäis eine Zivilisation,",
     "search_keywords": ["ancient Greek ruins temple Aegean sea dramatic lighting", "aegean sea rugged cliffs ancient ruins", "ancient civilization mediterranean wind sea", "greek civilization aegean sea rugged rocks", "ancient ruins between sea and mountains"],
-    "english_translation": " a civilization grew between the salty winds of the Mediterranean and the rugged rocks of the Aegean,"
+    "english_translation": " a civilization grew between the salty winds of the Mediterranean and the rugged rocks of the Aegean,",
+    "turkish_translation": " Akdeniz'in tuzlu rüzgarları ile Ege'nin sarp kayalıkları arasında bir medeniyet doğdu,"
   },
   {
     "_reasoning": "9 words. Split at the period. Completes the sentence.",
     "sample_num": 4,
     "sample_text": " die weit mehr als nur Stein und Mörtel war.",
     "search_keywords": ["ancient Greek philosophical gathering Acropolis Athens marble", "ancient greek culture people marble structures", "athens acropolis lively ancient city", "ancient civilization beyond stones and mortar", "ancient historical marble architecture culture"],
-    "english_translation": " which was far more than just stone and mortar."
+    "english_translation": " which was far more than just stone and mortar.",
+    "turkish_translation": " ki bu sadece taş ve harçtan çok daha fazlasıydı."
   }
 ]
 

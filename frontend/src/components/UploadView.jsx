@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { Upload, FileText, Loader2 } from 'lucide-react';
 
-const UploadView = ({ onComplete }) => {
+const UploadView = ({ onComplete, language = 'en' }) => {
   const [audioFile, setAudioFile] = useState(null);
   const [inputType, setInputType] = useState('text'); // text | file
   const [textContent, setTextContent] = useState('');
@@ -13,20 +13,20 @@ const UploadView = ({ onComplete }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!audioFile) {
-      setError('Please upload an audio file.');
+      setError(language === 'tr' ? 'Lütfen bir ses dosyası yükleyin.' : 'Please upload an audio file.');
       return;
     }
 
     let finalScript = '';
     if (inputType === 'text') {
       if (!textContent.trim()) {
-        setError('Please enter the text.');
+        setError(language === 'tr' ? 'Lütfen metni girin.' : 'Please enter the text.');
         return;
       }
       finalScript = textContent;
     } else {
       if (!textFile) {
-        setError('Please upload a text file.');
+        setError(language === 'tr' ? 'Lütfen bir metin dosyası yükleyin.' : 'Please upload a text file.');
         return;
       }
       finalScript = await textFile.text();
@@ -47,7 +47,7 @@ const UploadView = ({ onComplete }) => {
       onComplete(res.data);
     } catch (err) {
       console.error(err);
-      setError(err.response?.data?.detail || 'An error occurred during analysis.');
+      setError(err.response?.data?.detail || (language === 'tr' ? 'Analiz sırasında bir hata oluştu.' : 'An error occurred during analysis.'));
     } finally {
       setLoading(false);
     }
@@ -56,7 +56,7 @@ const UploadView = ({ onComplete }) => {
   return (
     <div className="card">
       <h2 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-        <Upload size={24} /> Start Project
+        <Upload size={24} /> {language === 'tr' ? 'Proje Başlat' : 'Start Project'}
       </h2>
       
       {error && <div style={{ color: 'var(--error-color)', marginBottom: '1rem' }}>{error}</div>}
@@ -64,7 +64,7 @@ const UploadView = ({ onComplete }) => {
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
         
         <div>
-          <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>1. Audio File (MP3/WAV)</label>
+          <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>{language === 'tr' ? '1. Ses Dosyası (MP3/WAV)' : '1. Audio File (MP3/WAV)'}</label>
           <input 
             type="file" 
             accept="audio/*" 
@@ -74,21 +74,21 @@ const UploadView = ({ onComplete }) => {
         </div>
 
         <div>
-          <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>2. Text Content</label>
+          <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>{language === 'tr' ? '2. Metin İçeriği' : '2. Text Content'}</label>
           
           <div className="tabs">
             <div className={`tab ${inputType === 'text' ? 'active' : ''}`} onClick={() => setInputType('text')}>
-              Copy / Paste
+              {language === 'tr' ? 'Kopyala / Yapıştır' : 'Copy / Paste'}
             </div>
             <div className={`tab ${inputType === 'file' ? 'active' : ''}`} onClick={() => setInputType('file')}>
-              Upload .txt File
+              {language === 'tr' ? '.txt Dosyası Yükle' : 'Upload .txt File'}
             </div>
           </div>
 
           {inputType === 'text' ? (
             <textarea 
               rows="6" 
-              placeholder="Paste your story or documentary script here..."
+              placeholder={language === 'tr' ? "Hikaye veya belgesel metninizi buraya yapıştırın..." : "Paste your story or documentary script here..."}
               value={textContent}
               onChange={(e) => setTextContent(e.target.value)}
               disabled={loading}
@@ -105,9 +105,9 @@ const UploadView = ({ onComplete }) => {
 
         <button type="submit" disabled={loading} style={{ marginTop: '1rem', width: '100%' }}>
           {loading ? (
-            <><Loader2 className="spinner" /> Analyzing...</>
+            <><Loader2 className="spinner" /> {language === 'tr' ? 'Analiz Ediliyor...' : 'Analyzing...'}</>
           ) : (
-            'Start Analysis'
+            language === 'tr' ? 'Analizi Başlat' : 'Start Analysis'
           )}
         </button>
       </form>

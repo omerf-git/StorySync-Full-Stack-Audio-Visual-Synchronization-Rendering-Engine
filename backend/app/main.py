@@ -212,12 +212,14 @@ def get_session_images(session_id: str, more: bool = False):
             keyword_used = current_item.get("sample_image") or current_item.get("english_translation") or current_item.get("english_sum", "")
             
         english_trans = current_item.get("english_translation", current_item.get("english_sum", ""))
+        turkish_trans = current_item.get("turkish_translation", "")
 
         return {
             "status": "success",
             "index": idx,
             "keyword_used": keyword_used,
             "english_translation": english_trans,
+            "turkish_translation": turkish_trans,
             "images": paginated_images,
             "total_cached": len(cached_images)
         }
@@ -233,6 +235,7 @@ def get_session_images(session_id: str, more: bool = False):
         keyword = current_item.get("sample_image") or current_item.get("english_translation") or current_item.get("english_sum") or current_item.get("sample_text", "")[:30]
         
     english_trans = current_item.get("english_translation", current_item.get("english_sum", ""))
+    turkish_trans = current_item.get("turkish_translation", "")
         
     try:
         images = search_images(keyword)
@@ -247,6 +250,7 @@ def get_session_images(session_id: str, more: bool = False):
             "index": idx,
             "keyword_used": keyword,
             "english_translation": english_trans,
+            "turkish_translation": turkish_trans,
             "images": paginated_images,
             "total_cached": len(images)
         }

@@ -7,6 +7,11 @@ import { Film, Home } from 'lucide-react';
 function App() {
   const [sessionData, setSessionData] = useState(null);
   const [view, setView] = useState('upload'); // upload | review | studio
+  const [language, setLanguage] = useState(() => localStorage.getItem('language') || 'en'); // 'en' | 'tr'
+
+  useEffect(() => {
+    localStorage.setItem('language', language);
+  }, [language]);
 
   useEffect(() => {
     const savedSessionId = localStorage.getItem('sessionId');
@@ -72,7 +77,7 @@ function App() {
       }
     } catch (error) {
       console.error("Error confirming session:", error);
-      alert("Error confirming session");
+      alert(language === 'tr' ? "Oturum onaylanırken hata oluştu" : "Error confirming session");
     }
   };
 
@@ -91,10 +96,18 @@ function App() {
         </h1>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           {sessionData && (
-            <span style={{ color: 'var(--text-muted)' }}>Session: {sessionData.session_id.substring(0,8)}</span>
+            <span style={{ color: 'var(--text-muted)' }}>{language === 'tr' ? 'Oturum' : 'Session'}: {sessionData.session_id.substring(0,8)}</span>
           )}
+          <button 
+            className="secondary" 
+            onClick={() => setLanguage(language === 'en' ? 'tr' : 'en')}
+            style={{ padding: '0.25rem 0.5rem', display: 'flex', alignItems: 'center', fontSize: '0.875rem' }}
+            title={language === 'tr' ? 'Switch to English' : 'Türkçe diline geç'}
+          >
+            {language === 'en' ? 'TR' : 'EN'}
+          </button>
           {view !== 'upload' && (
-            <button className="secondary" onClick={goHome} title="Return to Home" style={{ padding: '0.5rem', display: 'flex', alignItems: 'center' }}>
+            <button className="secondary" onClick={goHome} title={language === 'tr' ? 'Ana Sayfaya Dön' : 'Return to Home'} style={{ padding: '0.5rem', display: 'flex', alignItems: 'center' }}>
               <Home size={18} />
             </button>
           )}
@@ -102,9 +115,9 @@ function App() {
       </header>
 
       <main className="fade-enter">
-        {view === 'upload' && <UploadView onComplete={handleAnalysisComplete} />}
-        {view === 'review' && <ReviewView sessionData={sessionData} onConfirm={confirmSession} />}
-        {view === 'studio' && <StudioView sessionId={sessionData.session_id} />}
+        {view === 'upload' && <UploadView onComplete={handleAnalysisComplete} language={language} />}
+        {view === 'review' && <ReviewView sessionData={sessionData} onConfirm={confirmSession} language={language} />}
+        {view === 'studio' && <StudioView sessionId={sessionData.session_id} language={language} />}
       </main>
     </div>
   );
