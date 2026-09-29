@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import UploadView from './components/UploadView';
-import ReviewView from './components/ReviewView';
 import StudioView from './components/StudioView';
 import { Film, Home } from 'lucide-react';
 
@@ -23,7 +22,7 @@ function App() {
         })
         .then(data => {
           setSessionData(data);
-          setView(data.confirmed ? 'studio' : 'review');
+          setView('studio');
         })
         .catch(err => {
           console.error("Failed to restore session:", err);
@@ -35,50 +34,7 @@ function App() {
   const handleAnalysisComplete = (data) => {
     localStorage.setItem('sessionId', data.session_id);
     setSessionData(data);
-    const hasCriticalError = data.json_data.some(item => item.match_status === 3);
-    const hasMinorError = data.json_data.some(item => item.match_status === 2);
-    
-    if (hasCriticalError || hasMinorError) {
-      setView('review');
-    } else {
-      // Auto confirm if perfect
-      confirmSession(data.session_id, data.json_data, data.transcript_words);
-    }
-  };
-
-  const confirmSession = async (sessionId, jsonData, transcriptWords) => {
-    try {
-      // Update local state first
-      setSessionData(prev => ({
-        ...prev,
-        json_data: jsonData,
-        transcript_words: transcriptWords
-      }));
-
-      const res = await fetch(`/api/session/${sessionId}/confirm`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          json_data: jsonData,
-          transcript_words: transcriptWords
-        })
-      });
-      const data = await res.json();
-      
-      if (data.status === 'success') {
-        setView('studio');
-      } else {
-        // Still review needed
-        setSessionData(prev => ({
-          ...prev,
-          json_data: data.json_data,
-          transcript_words: data.transcript_words
-        }));
-      }
-    } catch (error) {
-      console.error("Error confirming session:", error);
-      alert(language === 'tr' ? "Oturum onaylanırken hata oluştu" : "Error confirming session");
-    }
+    setView('studio');
   };
 
   const goHome = () => {
@@ -116,7 +72,6 @@ function App() {
 
       <main className="fade-enter">
         {view === 'upload' && <UploadView onComplete={handleAnalysisComplete} language={language} />}
-        {view === 'review' && <ReviewView sessionData={sessionData} onConfirm={confirmSession} language={language} />}
         {view === 'studio' && <StudioView sessionId={sessionData.session_id} language={language} />}
       </main>
     </div>

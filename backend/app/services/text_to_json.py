@@ -14,10 +14,19 @@ def setup_gemini_api():
     if not api_key:
         raise ValueError("Please set the GEMINI_API_KEY environment variable.")
 
-def generate_json_from_text(system_prompt_path, text):
+def generate_json_from_text(system_prompt_path, text, global_context=""):
     # 1. Read system prompt
     with open(system_prompt_path, "r", encoding="utf-8") as f:
         system_instruction = f.read()
+
+    # Append global context instruction if provided
+    if global_context and global_context.strip():
+        system_instruction += f"\n\n## USER PROVIDED GLOBAL CONTEXT\n"
+        system_instruction += f"The user has provided the following context that applies to the entire text: '{global_context.strip()}'\n"
+        system_instruction += "When generating the 5 search_keywords, you MUST use this context. "
+        system_instruction += "Keyword 1 must be highly specific and strongly tied to this context. "
+        system_instruction += "Keywords 2, 3, 4, and 5 should gradually become broader and less tied to the specific context, "
+        system_instruction += "ensuring that if a highly specific image is not found, broader fallback images are available."
 
     # Fallback list of models (user requested list)
     fallback_models = [
@@ -77,8 +86,8 @@ def generate_json_from_text(system_prompt_path, text):
     else:
         raise Exception("Model generation failed.")
 
-def process_documentary_text(system_prompt_path, input_text, output_json_path):
-    output_data = generate_json_from_text(system_prompt_path, input_text)
+def process_documentary_text(system_prompt_path, input_text, output_json_path, global_context=""):
+    output_data = generate_json_from_text(system_prompt_path, input_text, global_context)
     if output_data:
         with open(output_json_path, "w", encoding="utf-8") as f:
             json.dump(output_data, f, ensure_ascii=False, indent=4)

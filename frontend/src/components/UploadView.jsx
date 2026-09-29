@@ -7,6 +7,7 @@ const UploadView = ({ onComplete, language = 'en' }) => {
   const [inputType, setInputType] = useState('text'); // text | file
   const [textContent, setTextContent] = useState('');
   const [textFile, setTextFile] = useState(null);
+  const [globalContext, setGlobalContext] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -39,6 +40,7 @@ const UploadView = ({ onComplete, language = 'en' }) => {
       const formData = new FormData();
       formData.append('audio', audioFile);
       formData.append('text', finalScript);
+      formData.append('global_context', globalContext.trim());
 
       const res = await axios.post('/api/analyze', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
@@ -74,7 +76,20 @@ const UploadView = ({ onComplete, language = 'en' }) => {
         </div>
 
         <div>
-          <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>{language === 'tr' ? '2. Metin İçeriği' : '2. Text Content'}</label>
+          <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>
+            {language === 'tr' ? '2. Genel Bağlam / Kontekst (İsteğe Bağlı)' : '2. Global Context (Optional)'}
+          </label>
+          <textarea 
+            rows="2" 
+            placeholder={language === 'tr' ? "Belgeselin geçtiği dönem, yer veya genel temayı belirtin (örn: 16. yüzyıl Osmanlı dönemi, savaş atmosferi...)" : "Specify the era, location, or general theme (e.g., 16th century Ottoman era, war atmosphere...)"}
+            value={globalContext}
+            onChange={(e) => setGlobalContext(e.target.value)}
+            disabled={loading}
+          />
+        </div>
+
+        <div>
+          <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>{language === 'tr' ? '3. Metin İçeriği' : '3. Text Content'}</label>
           
           <div className="tabs">
             <div className={`tab ${inputType === 'text' ? 'active' : ''}`} onClick={() => setInputType('text')}>

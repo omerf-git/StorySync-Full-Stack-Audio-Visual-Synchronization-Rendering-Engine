@@ -61,14 +61,11 @@ class VideoGenerationRequest(BaseModel):
     ken_burns: bool = True
     zoom_direction: str = "in"
 
-class ConfirmSessionRequest(BaseModel):
-    json_data: list
-    transcript_words: list
-
 @app.post("/api/analyze")
 def analyze_audio(
     text: str = Form(...),
     system_prompt_path: str = Form("system_prompt.txt"),
+    global_context: str = Form(""),
     audio: UploadFile = File(...)
 ):
     try:
@@ -76,7 +73,7 @@ def analyze_audio(
         if not os.path.exists(system_prompt_path):
             raise HTTPException(status_code=400, detail=f"System prompt file '{system_prompt_path}' not found.")
         
-        json_data = generate_json_from_text(system_prompt_path, text)
+        json_data = generate_json_from_text(system_prompt_path, text, global_context)
         if not json_data:
             raise HTTPException(status_code=500, detail="Failed to generate JSON from text.")
 
@@ -104,7 +101,7 @@ def analyze_audio(
             "image_offset": {},
             "keyword_index": {},
             "transcript_words": transcript_words,
-            "confirmed": False
+            "confirmed": True
         }
 
         return {
@@ -113,43 +110,12 @@ def analyze_audio(
             "total_segments": len(json_data),
             "json_data": json_data,
             "transcript_words": transcript_words,
-            "message": "Analysis complete. Please confirm timestamps."
+            "message": "Analysis complete."
         }
 
     except Exception as e:
         logger.error(f"Error in /api/analyze: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="An unexpected error occurred during text/audio analysis. Please check the logs.")
-
-@app.post("/api/session/{session_id}/confirm")
-def confirm_session(session_id: str, req: ConfirmSessionRequest):
-    if session_id not in sessions:
-        raise HTTPException(status_code=404, detail="Session not found")
-        
-    session = sessions[session_id]
-    
-    # Re-evaluate with potentially user-edited transcript words or JSON data
-    updated_json = evaluate_timestamps(req.json_data, req.transcript_words)
-    
-    # Check if there are any critical errors remaining
-    has_critical_error = any(item.get("match_status") == 3 for item in updated_json)
-    
-    if has_critical_error:
-        return {
-            "status": "review_needed",
-            "json_data": updated_json,
-            "transcript_words": req.transcript_words,
-            "message": "There are still segments with critical errors (Status 3)."
-        }
-        
-    # All good, save and mark as confirmed
-    session["json_data"] = updated_json
-    session["transcript_words"] = req.transcript_words
-    session["confirmed"] = True
-    
-    return {
-        "status": "success",
-        "message": "Timestamps confirmed. Session is ready."
-    }
 
 @app.get("/api/session/{session_id}")
 def get_session(session_id: str):
@@ -212,7 +178,7 @@ def get_session_images(session_id: str, more: bool = False):
             keyword_used = current_item.get("sample_image") or current_item.get("english_translation") or current_item.get("english_sum", "")
             
         english_trans = current_item.get("english_translation", current_item.get("english_sum", ""))
-        turkish_trans = current_item.get("turkish_translation", "")
+        turkish_trans = current_item.get("turkish_translation", current_item.get("turkish_sum", ""))
 
         return {
             "status": "success",
@@ -235,7 +201,7 @@ def get_session_images(session_id: str, more: bool = False):
         keyword = current_item.get("sample_image") or current_item.get("english_translation") or current_item.get("english_sum") or current_item.get("sample_text", "")[:30]
         
     english_trans = current_item.get("english_translation", current_item.get("english_sum", ""))
-    turkish_trans = current_item.get("turkish_translation", "")
+    turkish_trans = current_item.get("turkish_translation", current_item.get("turkish_sum", ""))
         
     try:
         images = search_images(keyword)
