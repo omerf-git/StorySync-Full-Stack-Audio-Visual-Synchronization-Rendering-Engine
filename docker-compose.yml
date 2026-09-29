@@ -1,13 +1,13 @@
 # ============================================================
-# Docker Compose - NVIDIA GPU Destekli
+# Docker Compose - NVIDIA GPU Supported
 # ============================================================
-# Kullanım:
+# Usage:
 #   docker compose up -d --build
 #
-# Gereksinimler:
+# Requirements:
 #   - Docker Engine 24+
 #   - NVIDIA Container Toolkit (nvidia-docker2)
-#   - NVIDIA GPU sürücüsü yüklü olmalı
+#   - NVIDIA GPU driver must be installed
 # ============================================================
 
 services:
@@ -19,32 +19,32 @@ services:
     restart: unless-stopped
 
     ports:
-      - "80:80"     # Tarayıcıdan http://localhost ile erişim
+      - "80:80"     # Access via browser at http://localhost
 
-    # ── NVIDIA GPU Erişimi ──
+    # ── NVIDIA GPU Access ──
     deploy:
       resources:
         reservations:
           devices:
             - driver: nvidia
-              count: 1           # Tek GPU yeterli
+              count: 1           # 1 GPU is enough
               capabilities: [gpu]
 
-    # ── Ortam Değişkenleri ──
-    # Yöntem 1: .env dosyasından oku
+    # ── Environment Variables ──
+    # Method 1: Read from .env file
     env_file:
       - backend/.env
 
-    # Yöntem 2: Doğrudan tanımla (isteğe bağlı, .env dosyası yoksa)
+    # Method 2: Define directly (optional, if .env file is missing)
     # environment:
     #   - GEMINI_API_KEY=your_key_here
     #   - SERPER_API_KEY=your_key_here
 
-    # ── Volume: Whisper model cache'i (her build'de tekrar indirmeyi önler) ──
+    # ── Volume: Whisper model cache (prevents re-downloading on every build) ──
     volumes:
       - whisper-cache:/app/.cache
 
-    # Sağlık kontrolü
+    # Healthcheck
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:80/"]
       interval: 30s

@@ -6,7 +6,7 @@ __pycache__/
 *.egg-info/
 .eggs/
 
-# ── Node / Frontend (build sırasında tekrar kurulacak) ──
+# ── Node / Frontend (will be reinstalled during build) ──
 frontend/node_modules/
 frontend/dist/
 
@@ -20,7 +20,7 @@ frontend/dist/
 .git/
 .gitignore
 
-# ── Guides (uygulamaya dahil etmeye gerek yok) ──
+# ── Guides (no need to include in the app) ──
 frontend_guide.md
 backend/backend_guide.md
 

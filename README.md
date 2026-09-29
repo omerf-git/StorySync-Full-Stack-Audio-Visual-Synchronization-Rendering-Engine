@@ -10,46 +10,46 @@
 
 # 🎬 Google Images to Video
 
-**Metin tabanlı belgesel/hikaye anlatımını, yapay zeka destekli görsel arama ve ses senkronizasyonu ile profesyonel video segmentlerine dönüştüren tam yığın (full-stack) uygulama.**
+**A full-stack application that transforms text-based documentary/storytelling scripts into professional video segments using AI-powered image search and audio synchronization.**
 
-Bir ses kaydı ve metin girişi alır; metni AI ile parçalara ayırır, Whisper ile ses-metin eşleştirmesi yapar, Google Images'tan otomatik görsel arar ve her parça için **birebir ses senkronizasyonlu MP4 video segmentleri** üretir.
-
----
-
-## 📋 İçindekiler
-
-- [Özellikler](#-özellikler)
-- [Mimari](#-mimari)
-- [Demo Akışı](#-demo-akışı)
-- [Hızlı Başlangıç (Docker)](#-hızlı-başlangıç-docker)
-- [Manuel Kurulum (Geliştirme)](#-manuel-kurulum-geliştirme)
-- [API Anahtarları](#-api-anahtarları)
-- [Proje Yapısı](#-proje-yapısı)
-- [API Referansı](#-api-referansı)
-- [Teknik Detaylar](#-teknik-detaylar)
-- [Sorun Giderme](#-sorun-giderme)
-- [Lisans](#-lisans)
+It takes an audio recording and text input, segments the text using AI, aligns the text with audio via Whisper, automatically searches Google Images, and produces **perfectly lip-synced MP4 video segments** for each part.
 
 ---
 
-## ✨ Özellikler
+## 📋 Table of Contents
 
-| Özellik | Açıklama |
-|---------|----------|
-| 🤖 **AI Metin Segmentasyonu** | Gemini API ile belgesel metnini anlamlı parçalara ayırır |
-| 🎙️ **Whisper Ses Analizi** | OpenAI Whisper ile kelime bazında zaman damgası çıkarır (GPU hızlandırmalı) |
-| 🔍 **Otomatik Görsel Arama** | Google Images üzerinden her parça için bağlamsal görsel arar |
-| 🎬 **Video Üretimi** | FFmpeg ile birebir ses senkronizasyonlu MP4 segmentleri oluşturur |
-| 🎯 **Frame-Aligned Sync** | 30 FPS kare hizalama ile sıfır birikimli kayma (drift) garantisi |
-| 📱 **Modern Web UI** | React + Vite ile responsive, dark-mode arayüz |
-| 🐳 **Docker Ready** | Tek komutla NVIDIA GPU destekli deployment |
-| 💾 **Session Yönetimi** | Sayfa yenilense bile kaldığınız yerden devam |
+- [Features](#-features)
+- [Architecture](#-architecture)
+- [Demo Flow](#-demo-flow)
+- [Quick Start (Docker)](#-quick-start-docker)
+- [Manual Setup (Development)](#-manual-setup-development)
+- [API Keys](#-api-keys)
+- [Project Structure](#-project-structure)
+- [API Reference](#-api-reference)
+- [Technical Details](#-technical-details)
+- [Troubleshooting](#-troubleshooting)
+- [License](#-license)
 
 ---
 
-## 🏗️ Mimari
+## ✨ Features
 
-```
+| Feature | Description |
+|---------|-------------|
+| 🤖 **AI Text Segmentation** | Segments documentary text into meaningful parts using Gemini API |
+| 🎙️ **Whisper Audio Analysis** | Extracts word-level timestamps using OpenAI Whisper (GPU-accelerated) |
+| 🔍 **Automatic Image Search** | Searches for contextually relevant images via Google Images for each segment |
+| 🎬 **Video Generation** | Creates perfectly synchronized MP4 segments using FFmpeg |
+| 🎯 **Frame-Aligned Sync** | 30 FPS frame alignment guarantees zero cumulative audio drift |
+| 📱 **Modern Web UI** | Responsive, dark-mode interface built with React + Vite |
+| 🐳 **Docker Ready** | Single-command deployment with NVIDIA GPU support |
+| 💾 **Session Management** | Restores session state even after page reloads |
+
+---
+
+## 🏗️ Architecture
+
+```text
 ┌─────────────────────────────────────────────────────────┐
 │                    Docker Container                      │
 │                                                         │
@@ -66,16 +66,16 @@ Bir ses kaydı ve metin girişi alır; metni AI ile parçalara ayırır, Whisper
 │                   │                                 │   │
 │                   │  ┌───────────┐ ┌─────────────┐ │   │
 │                   │  │ Gemini AI │ │   Whisper    │ │   │
-│                   │  │ (Metin)   │ │ (Ses→Metin)  │ │   │
+│                   │  │ (Text)    │ │ (Audio→Text) │ │   │
 │                   │  └───────────┘ └──────┬──────┘ │   │
 │                   │                       │        │   │
 │                   │  ┌───────────┐ ┌──────▼──────┐ │   │
 │                   │  │  Serper   │ │  NVIDIA GPU │ │   │
-│                   │  │ (Görseller)│ │   (CUDA)   │ │   │
+│                   │  │ (Images)  │ │   (CUDA)   │ │   │
 │                   │  └───────────┘ └─────────────┘ │   │
 │                   │                                 │   │
 │                   │  ┌─────────────────────────┐   │   │
-│                   │  │  FFmpeg (Video Üretimi)  │   │   │
+│                   │  │  FFmpeg (Video Output)  │   │   │
 │                   │  └─────────────────────────┘   │   │
 │                   └────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────┘
@@ -83,37 +83,37 @@ Bir ses kaydı ve metin girişi alır; metni AI ile parçalara ayırır, Whisper
 
 ---
 
-## 🎬 Demo Akışı
+## 🎬 Demo Flow
 
-### 1️⃣ Proje Başlat
-Ses dosyanızı (MP3/WAV) ve belgesel metninizi yükleyin. AI metni otomatik olarak parçalara ayırır ve Whisper ile ses-metin eşleştirmesi yapar.
+### 1️⃣ Start Project
+Upload your audio file (MP3/WAV) and documentary script. The AI automatically segments the text and aligns it with the audio using Whisper.
 
-### 2️⃣ Zaman Damgası İnceleme
-AI'ın eşleştirmesini kontrol edin. Sorunlu eşleşmeleri düzenleyip onaylayın.
+### 2️⃣ Review Timestamps
+Check the AI's audio-text alignment. Edit and confirm any problematic matches.
 
-### 3️⃣ Stüdyo
-Her parça için Google Images'tan gelen görseller arasından birini seçin. Seçtiğiniz anda video oluşturulur ve otomatik indirilir.
+### 3️⃣ Studio
+Select one of the images retrieved from Google Images for each segment. Once selected, the video is generated and downloaded automatically.
 
-### 4️⃣ Birleştirme
-İndirilen MP4 segmentlerini sırasıyla CapCut, DaVinci Resolve veya herhangi bir video düzenleyicide birleştirin. Ses senkronizasyonu kusursuzdur.
+### 4️⃣ Combine
+Import the downloaded MP4 segments in sequence into your video editor (CapCut, DaVinci Resolve, etc.). The audio synchronization will be flawless.
 
 ---
 
-## 🐳 Hızlı Başlangıç (Docker)
+## 🐳 Quick Start (Docker)
 
-### Gereksinimler
+### Requirements
 
-| Bileşen | Minimum | Önerilen |
-|---------|---------|----------|
-| **Docker Engine** | 24.0+ | Son sürüm |
+| Component | Minimum | Recommended |
+|-----------|---------|-------------|
+| **Docker Engine** | 24.0+ | Latest Version |
 | **RAM** | 4 GB | 8 GB+ |
 | **Disk** | 10 GB | 20 GB+ |
 | **GPU** | - | NVIDIA (CUDA 12.x) |
 
-### NVIDIA GPU ile (Önerilen)
+### With NVIDIA GPU (Recommended)
 
 ```bash
-# 1. NVIDIA Container Toolkit kurulumu (sadece ilk seferde)
+# 1. Install NVIDIA Container Toolkit (first time only)
 curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | \
   sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
 curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \
@@ -123,60 +123,60 @@ sudo apt-get update && sudo apt-get install -y nvidia-container-toolkit
 sudo nvidia-ctk runtime configure --runtime=docker
 sudo systemctl restart docker
 
-# 2. Projeyi klonla
+# 2. Clone the project
 git clone https://github.com/YOUR_USERNAME/google_images_to_video.git
 cd google_images_to_video
 
-# 3. API anahtarlarını ayarla
+# 3. Setup API keys
 cp backend/.env.example backend/.env
-nano backend/.env  # Kendi API key'lerinizi girin
+nano backend/.env  # Enter your API keys
 
-# 4. Build ve çalıştır
+# 4. Build and run
 docker compose up -d --build
 
-# 5. Tarayıcıda aç
+# 5. Open in browser
 # http://localhost
 ```
 
-### GPU Olmadan (CPU Only)
+### Without GPU (CPU Only)
 
 ```bash
-# Aynı adımları takip edin, sadece 4. adımda şu komutu kullanın:
+# Follow the same steps, but use this command for step 4:
 docker compose -f docker-compose.cpu.yml up -d --build
 ```
 
-> ⚠️ CPU modunda Whisper ~3-5x daha yavaş çalışır ancak tüm fonksiyonlar sorunsuz çalışır.
+> ⚠️ Whisper runs ~3-5x slower in CPU mode, but all functions work smoothly.
 
 ---
 
-## 🛠️ Manuel Kurulum (Geliştirme)
+## 🛠️ Manual Setup (Development)
 
-### Gereksinimler
+### Requirements
 
 - Python 3.10+
 - Node.js 18+
 - FFmpeg
-- (Opsiyonel) NVIDIA GPU + CUDA
+- (Optional) NVIDIA GPU + CUDA
 
 ### Backend
 
 ```bash
-# Sanal ortam oluştur
+# Create virtual environment
 python3 -m venv venv
 source venv/bin/activate
 
-# Bağımlılıkları kur
+# Install dependencies
 cd backend
 pip install -r requirements.txt
 
-# PyTorch CUDA (GPU varsa)
+# PyTorch CUDA (if GPU is available)
 pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu126
 
-# API anahtarlarını ayarla
+# Setup API keys
 cp .env.example .env
 nano .env
 
-# Sunucuyu başlat
+# Start the server
 uvicorn app.main:app --host 0.0.0.0 --port 8005
 ```
 
@@ -188,20 +188,20 @@ npm install
 npm run dev
 ```
 
-Tarayıcıda `http://localhost:3000` adresini açın.
+Open `http://localhost:3000` in your browser.
 
 ---
 
-## 🔑 API Anahtarları
+## 🔑 API Keys
 
-Bu uygulama 2 harici API servisi kullanır:
+This application requires 2 external API services:
 
-| Servis | Amaç | Ücretsiz Plan | Nereden Alınır |
-|--------|-------|---------------|----------------|
-| **Gemini API** | Metin segmentasyonu ve çeviri | ✅ Günlük 1500 istek | [Google AI Studio](https://aistudio.google.com/apikey) |
-| **Serper API** | Google Images görsel arama | ✅ Aylık 2500 arama | [serper.dev](https://serper.dev) |
+| Service | Purpose | Free Tier | Where to Get |
+|---------|---------|-----------|--------------|
+| **Gemini API** | Text segmentation & translation | ✅ 1500 req/day | [Google AI Studio](https://aistudio.google.com/apikey) |
+| **Serper API** | Google Images search | ✅ 2500 req/month | [serper.dev](https://serper.dev) |
 
-API anahtarlarınızı `backend/.env` dosyasına yazın:
+Add your API keys to the `backend/.env` file:
 
 ```env
 GEMINI_API_KEY=your_gemini_api_key_here
@@ -210,40 +210,40 @@ SERPER_API_KEY=your_serper_api_key_here
 
 ---
 
-## 📁 Proje Yapısı
+## 📁 Project Structure
 
 ```
 google_images_to_video/
 ├── backend/
 │   ├── app/
-│   │   ├── main.py                 # FastAPI uç noktaları & session yönetimi
+│   │   ├── main.py                 # FastAPI endpoints & session management
 │   │   └── services/
-│   │       ├── text_to_json.py     # Gemini AI ile metin segmentasyonu
-│   │       ├── audio_processing.py # Whisper ile ses-metin eşleştirmesi
-│   │       ├── image_search.py     # Serper API ile Google Images arama
-│   │       └── video_generation.py # FFmpeg ile video üretimi
-│   ├── system_prompt.txt           # Gemini AI sistem talimatı
-│   ├── requirements.txt            # Python bağımlılıkları
-│   ├── .env.example                # Örnek ortam değişkenleri
-│   └── .env                        # API anahtarları (git'e dahil edilmez)
+│   │       ├── text_to_json.py     # Text segmentation via Gemini AI
+│   │       ├── audio_processing.py # Audio-text alignment via Whisper
+│   │       ├── image_search.py     # Image search via Serper API
+│   │       └── video_generation.py # Video generation via FFmpeg
+│   ├── system_prompt.txt           # Gemini AI system instructions
+│   ├── requirements.txt            # Python dependencies
+│   ├── .env.example                # Example environment variables
+│   └── .env                        # API keys (not tracked by git)
 │
 ├── frontend/
 │   ├── src/
-│   │   ├── App.jsx                 # Ana uygulama bileşeni
+│   │   ├── App.jsx                 # Main application component
 │   │   ├── components/
-│   │   │   ├── UploadView.jsx      # Ses ve metin yükleme sayfası
-│   │   │   ├── ReviewView.jsx      # Zaman damgası inceleme sayfası
-│   │   │   └── StudioView.jsx      # Görsel seçimi ve video üretimi
-│   │   ├── index.css               # Global stiller (dark theme)
+│   │   │   ├── UploadView.jsx      # Audio & text upload view
+│   │   │   ├── ReviewView.jsx      # Timestamp review view
+│   │   │   └── StudioView.jsx      # Image selection & video generation view
+│   │   ├── index.css               # Global styles (dark theme)
 │   │   └── main.jsx                # React entry point
 │   ├── package.json
-│   └── vite.config.js              # Vite + API proxy ayarları
+│   └── vite.config.js              # Vite config & API proxy settings
 │
 ├── Dockerfile                      # Multi-stage build (React + CUDA Python)
-├── docker-compose.yml              # GPU destekli deployment
+├── docker-compose.yml              # GPU supported deployment
 ├── docker-compose.cpu.yml          # CPU-only deployment
-├── nginx.conf                      # Reverse proxy konfigürasyonu
-├── docker-entrypoint.sh            # Container başlatma scripti
+├── nginx.conf                      # Reverse proxy configuration
+├── docker-entrypoint.sh            # Container startup script
 ├── .gitignore
 ├── .dockerignore
 ├── LICENSE
@@ -252,98 +252,98 @@ google_images_to_video/
 
 ---
 
-## 📡 API Referansı
+## 📡 API Reference
 
-| Method | Endpoint | Açıklama |
-|--------|----------|----------|
-| `POST` | `/api/analyze` | Ses + metin yükle, AI analizi başlat |
-| `GET` | `/api/session/{id}` | Session bilgilerini getir |
-| `POST` | `/api/session/{id}/confirm` | Zaman damgalarını onayla |
-| `GET` | `/api/session/{id}/images` | Mevcut parça için görselleri getir |
-| `POST` | `/api/session/{id}/generate_video` | Seçilen görsel ile video oluştur |
-| `POST` | `/api/session/{id}/next` | Sonraki parçaya geç |
-| `POST` | `/api/session/{id}/prev` | Önceki parçaya dön |
-| `POST` | `/api/session/{id}/next_keyword` | Farklı anahtar kelime ile ara |
-| `GET` | `/api/session/healthcheck` | Sağlık kontrolü |
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/api/analyze` | Upload audio + text, start AI analysis |
+| `GET` | `/api/session/{id}` | Get session details |
+| `POST` | `/api/session/{id}/confirm` | Confirm timestamps |
+| `GET` | `/api/session/{id}/images` | Get images for the current segment |
+| `POST` | `/api/session/{id}/generate_video` | Generate video with the selected image |
+| `POST` | `/api/session/{id}/next` | Skip to next segment |
+| `POST` | `/api/session/{id}/prev` | Go back to previous segment |
+| `POST` | `/api/session/{id}/next_keyword` | Search with a different keyword |
+| `GET` | `/api/session/healthcheck` | Health check endpoint |
 
-Detaylı API dokümantasyonu: `http://localhost:8005/docs` (Swagger UI)
+Detailed API documentation: `http://localhost:8005/docs` (Swagger UI)
 
 ---
 
-## 🔧 Teknik Detaylar
+## 🔧 Technical Details
 
-### Ses-Video Senkronizasyonu
+### Audio-Video Synchronization
 
-Bu uygulama, video segmentleri arasında **sıfır birikimli kayma (zero cumulative drift)** garantisi sağlar:
+This application guarantees **zero cumulative drift** between video segments:
 
-1. **Frame-Aligned Timestamps**: Tüm zaman damgaları `1/30 saniye` katlarına hizalanır
-2. **WAV Extraction**: Ses önce PCM/WAV formatına çıkarılır (sample-accurate kesim)
-3. **Matched Duration**: Video ve ses track'leri birebir aynı sürede üretilir
-4. **Sequential Boundary Sync**: Ardışık segmentlerin sınır noktaları eşitlenir
+1. **Frame-Aligned Timestamps**: All timestamps are aligned to exact multiples of `1/30 seconds`.
+2. **WAV Extraction**: Audio is extracted to PCM/WAV format first (sample-accurate cuts).
+3. **Matched Duration**: Video and audio tracks are produced with exactly the same duration.
+4. **Sequential Boundary Sync**: Boundary points of consecutive segments are perfectly aligned.
 
-### Whisper Modeli
+### Whisper Model
 
-Varsayılan olarak `small` modeli kullanılır. Daha yüksek doğruluk için `medium` veya `large-v3` kullanılabilir (`audio_processing.py` içinde `model_name` parametresi).
+By default, the `small` model is used. For higher accuracy, `medium` or `large-v3` can be used (via the `model_name` parameter in `audio_processing.py`).
 
-| Model | VRAM | Hız | Doğruluk |
-|-------|------|-----|----------|
+| Model | VRAM | Speed | Accuracy |
+|-------|------|-------|----------|
 | tiny | ~1 GB | ⚡⚡⚡⚡ | ★★☆☆ |
 | small | ~2 GB | ⚡⚡⚡ | ★★★☆ |
 | medium | ~5 GB | ⚡⚡ | ★★★★ |
 | large-v3 | ~10 GB | ⚡ | ★★★★★ |
 
-### Filigran Filtreleme
+### Watermark Filtering
 
-Görsel arama sonuçlarından filigran içermesi muhtemel kaynaklar (Getty Images, Shutterstock, iStock vb.) otomatik olarak filtrelenir.
+Sources likely to contain watermarks (Getty Images, Shutterstock, iStock, etc.) are automatically filtered out from the image search results.
 
 ---
 
-## 🐛 Sorun Giderme
+## 🐛 Troubleshooting
 
 <details>
-<summary><strong>Docker build çok uzun sürüyor</strong></summary>
+<summary><strong>Docker build takes too long</strong></summary>
 
-İlk build ~10-15 dakika sürebilir (PyTorch + CUDA indirmesi). Sonraki build'ler Docker cache sayesinde çok daha hızlıdır. `docker compose build --no-cache` ile tamamen sıfırdan build alabilirsiniz.
+The initial build may take ~10-15 minutes (PyTorch + CUDA download). Subsequent builds are much faster thanks to the Docker cache. You can run `docker compose build --no-cache` to force a complete rebuild.
 </details>
 
 <details>
-<summary><strong>GPU algılanmıyor</strong></summary>
+<summary><strong>GPU is not detected</strong></summary>
 
 ```bash
-# NVIDIA sürücüsünü kontrol et
+# Check NVIDIA driver
 nvidia-smi
 
-# NVIDIA Container Toolkit kurulu mu?
+# Is NVIDIA Container Toolkit installed?
 dpkg -l | grep nvidia-container-toolkit
 
-# Docker runtime doğru mu?
+# Is the Docker runtime correct?
 docker info | grep -i runtime
 ```
 </details>
 
 <details>
-<summary><strong>"Bu görselin kaynak sitesi indirmeye izin vermiyor" hatası</strong></summary>
+<summary><strong>"The source site for this image does not allow downloading" error</strong></summary>
 
-Bazı web siteleri bot erişimini engelliyor. Farklı bir görsel seçin veya 🔑 butonu ile farklı bir anahtar kelime deneyin.
+Some websites block bot access. Select a different image or use the 🔑 button to try a different keyword.
 </details>
 
 <details>
-<summary><strong>Whisper çok yavaş çalışıyor</strong></summary>
+<summary><strong>Whisper is running very slowly</strong></summary>
 
-CPU modunda Whisper yavaştır. NVIDIA GPU'nuz varsa `docker-compose.yml` (GPU versiyonu) kullandığınızdan emin olun. GPU varsa ~5-10x hızlanma sağlanır.
+Whisper is slow in CPU mode. If you have an NVIDIA GPU, make sure you are using `docker-compose.yml` (the GPU version). Using a GPU provides a ~5-10x speed boost.
 </details>
 
 <details>
-<summary><strong>Sayfa yenileyince ana sayfaya dönüyor</strong></summary>
+<summary><strong>Page refreshes return to the upload screen</strong></summary>
 
-Backend sunucusu yeniden başlatılmışsa in-memory session'lar silinir. Sunucunun çalıştığından emin olun: `docker compose ps`
+In-memory sessions are cleared if the backend server restarts. Make sure the server is running stably: `docker compose ps`
 </details>
 
 ---
 
-## 📄 Lisans
+## 📄 License
 
-Bu proje [MIT Lisansı](LICENSE) ile lisanslanmıştır.
+This project is licensed under the [MIT License](LICENSE).
 
 ---
 

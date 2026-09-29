@@ -1,15 +1,15 @@
 # ============================================================
-# Docker Compose - CPU Only (GPU olmayan makineler için)
+# Docker Compose - CPU Only (for machines without GPUs)
 # ============================================================
-# Kullanım:
+# Usage:
 #   docker compose -f docker-compose.cpu.yml up -d --build
 #
-# Gereksinimler:
+# Requirements:
 #   - Docker Engine 24+
-#   - NVIDIA GPU gerekmez, Whisper CPU modunda çalışır
+#   - NVIDIA GPU is not required, Whisper runs in CPU mode
 #
-# NOT: CPU modunda Whisper ~3-5x daha yavaş çalışır ama
-#      tüm fonksiyonlar sorunsuz çalışmaya devam eder.
+# NOTE: Whisper runs ~3-5x slower in CPU mode but
+#       all functions continue to work flawlessly.
 # ============================================================
 
 services:
@@ -23,9 +23,9 @@ services:
     ports:
       - "80:80"
 
-    # GPU YOK - deploy bloğu olmadan çalışır
+    # NO GPU - runs without deploy block
 
-    # Whisper'ı CPU moduna zorla
+    # Force Whisper to CPU mode
     environment:
       - CUDA_VISIBLE_DEVICES=""
     

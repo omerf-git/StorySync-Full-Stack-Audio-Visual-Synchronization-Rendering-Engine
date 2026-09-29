@@ -121,37 +121,37 @@ def evaluate_timestamps(data, transcript_words):
                 next_item['start_time'] = round(mid_point, 2)
     
     # --- FRAME-ALIGNED TIMESTAMP SNAPPING ---
-    # Video 30 FPS → süre sadece 1/30 saniye (33.3ms) katlarından oluşabilir.
-    # Eğer start_time ve end_time 1/30 katı değilse, video track sesten kısa/uzun kalır.
-    # Bu fark her segmentte birikir ve CapCut'ta kayma oluşturur.
-    # ÇÖZÜM: Tüm zaman damgalarını 1/30'un en yakın katına hizala.
-    # Ardışık segmentler aynı sınır noktasını paylaştığı için boşluk/bindirme olmaz.
+    # Video is 30 FPS -> duration can only consist of multiples of 1/30 seconds (33.3ms).
+    # If start_time and end_time are not multiples of 1/30, the video track stays shorter/longer than the audio.
+    # This difference accumulates in each segment and causes drift in video editors like CapCut.
+    # SOLUTION: Align all timestamps to the nearest multiple of 1/30.
+    # Since consecutive segments share the same boundary point, there are no gaps or overlaps.
     fps = 30.0
     frame_dur = 1.0 / fps
     
     for i, item in enumerate(data):
         if 'start_time' in item and 'end_time' in item:
-            # start_time'ı en yakın frame sınırına hizala
+            # Align start_time to the nearest frame boundary
             snapped_start = round(item['start_time'] / frame_dur) * frame_dur
             snapped_start = round(snapped_start, 4)
             
-            # end_time'ı en yakın frame sınırına hizala
+            # Align end_time to the nearest frame boundary
             snapped_end = round(item['end_time'] / frame_dur) * frame_dur
             snapped_end = round(snapped_end, 4)
             
-            # Sürenin en az 1 frame olduğundan emin ol
+            # Ensure duration is at least 1 frame
             if snapped_end <= snapped_start:
                 snapped_end = snapped_start + frame_dur
             
             item['start_time'] = snapped_start
             item['end_time'] = snapped_end
     
-    # Ardışık segmentlerin sınırlarını eşitle (snap sonrası oluşabilecek küçük farkları düzelt)
+    # Match consecutive segment boundaries (fix minor discrepancies from snapping)
     for i in range(len(data) - 1):
         current_item = data[i]
         next_item = data[i+1]
         if 'end_time' in current_item and 'start_time' in next_item:
-            # Bir öncekinin bitişini, bir sonrakinin başlangıcına eşitle
+            # Set the next start time to the current end time
             next_item['start_time'] = current_item['end_time']
                 
     return data
@@ -168,17 +168,17 @@ def process_audio_timestamps(data, audio_path, model_name="small", min_match=0.6
     transcript_words = get_transcript_words(audio_path, model_name)
     data = evaluate_timestamps(data, transcript_words)
     
-    # --- SON SEGMENTİ SES DOSYASININ SONUNA KADAR UZAT ---
-    # Orijinal ses dosyasındaki son sessizliğin de (varsa) son videoya dahil edilmesi
+    # --- EXTEND FINAL SEGMENT TO THE END OF AUDIO FILE ---
+    # Include the final silence in the original audio file (if any) to the last video segment
     total_duration = get_audio_duration(audio_path)
     if total_duration and len(data) > 0:
         last_item = data[-1]
         if 'end_time' in last_item:
             fps = 30.0
             frame_dur = 1.0 / fps
-            # Tam ses süresini yine video kare kuralına (1/30s) hizalıyoruz ki kayma olmasın
+            # Align the total audio duration to the video frame rule (1/30s) to prevent drift
             snapped_duration = round(round(total_duration / frame_dur) * frame_dur, 4)
-            # Eğer hesaplanan süre başlangıçtan büyükse son videonun bitişini uzat
+            # If the calculated duration is greater than start time, extend the end of the last video
             if snapped_duration > last_item.get('start_time', 0):
                 last_item['end_time'] = snapped_duration
     

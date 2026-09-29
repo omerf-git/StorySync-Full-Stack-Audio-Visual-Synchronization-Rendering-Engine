@@ -21,22 +21,22 @@ def generate_json_from_text(system_prompt_path, text):
 
     # Fallback list of models (user requested list)
     fallback_models = [
-        # 1. En Güncel ve En Yetenekli Flash Modelleri (Yoğunluk anında geçici hata verebilir ama ilk tercihler)
+        # 1. Most up-to-date and capable Flash models (may give temporary errors during peak times, but preferred)
         "gemini-3.8-flash",
         "gemini-3.7-flash",
-        "gemini-3.6-flash",  # Testinizde direkt çalıştı
-        "gemini-3.5-flash",  # Testinizde direkt çalıştı
-        # 2. Dinamik "Latest" Modelleri (Google tarafında en güncel kararlı sürüme yönlendirir)
+        "gemini-3.6-flash",
+        "gemini-3.5-flash",
+        # 2. Dynamic "Latest" models (always points to the latest stable version)
         "gemini-flash-latest",
-        # 3. Yüksek Hızlı / Hafif Modeller (JSON çıkarma işlerinde çok hızlı ve etkilidir)
+        # 3. High-speed / Lightweight models (very fast and effective for JSON extraction)
         "gemini-3.5-flash-lite",
-        "gemini-3.1-flash-lite",  # Testinizde direkt çalıştı
+        "gemini-3.1-flash-lite",
         "gemini-3.1-flash-lite-preview",
         "gemini-flash-lite-latest",
-        # 4. Temel Önizleme ve Açık Ağırlıklı Alternatifler (Gerekirse en son fallback)
-        "gemini-3-flash-preview",  # Testinizde direkt çalıştı (Adı preview olarak güncellendi)
-        # "gemma-4-31b-it",  # Güçlü açık model yedeği
-        # "gemma-4-26b-a4b-it",  # Testinizde direkt çalıştı
+        # 4. Basic Preview and Open Weight Alternatives (absolute fallback if needed)
+        "gemini-3-flash-preview",
+        # "gemma-4-31b-it",  # Powerful open model backup
+        # "gemma-4-26b-a4b-it",
     ]
     
     client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
@@ -71,7 +71,7 @@ def generate_json_from_text(system_prompt_path, text):
             last_exception = e
             continue
             
-    print("Tüm modeller denendi fakat başarılı olunamadı.")
+    print("All models tried but failed.")
     if last_exception:
         raise last_exception
     else:

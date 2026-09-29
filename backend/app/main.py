@@ -19,16 +19,16 @@ import logging
 load_dotenv()
 
 # Setup Logging
-# Varsayılan log seviyesi INFO. Detaylı geliştirici logları için .env dosyasına LOG_LEVEL=DEBUG eklenebilir.
+# Default log level is INFO. For detailed developer logs, add LOG_LEVEL=DEBUG to the .env file.
 LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO").upper()
 
-# 1. Kök (root) log seviyesini WARNING yaparak 3. parti kütüphanelerin (urllib3, asyncio vb.) gereksiz loglarını susturuyoruz.
+# 1. We set the root log level to WARNING to silence unnecessary logs from 3rd party libraries (urllib3, asyncio, etc.)
 logging.basicConfig(
     level=logging.WARNING,
     format="%(asctime)s - %(levelname)s - [%(name)s] - %(message)s",
 )
 
-# 2. Kendi uygulamamızın ("app") log seviyesini belirliyoruz.
+# 2. Set the log level for our own application ("app").
 logging.getLogger("app").setLevel(getattr(logging, LOG_LEVEL, logging.INFO))
 logger = logging.getLogger(__name__)
 
@@ -118,7 +118,7 @@ def analyze_audio(
 
     except Exception as e:
         logger.error(f"Error in /api/analyze: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Metin/Ses analizi sırasında beklenmeyen bir hata oluştu. Lütfen logları kontrol edin.")
+        raise HTTPException(status_code=500, detail="An unexpected error occurred during text/audio analysis. Please check the logs.")
 
 @app.post("/api/session/{session_id}/confirm")
 def confirm_session(session_id: str, req: ConfirmSessionRequest):
@@ -182,7 +182,7 @@ def get_session_images(session_id: str, more: bool = False):
     if idx >= len(json_data):
         return {
             "status": "completed", 
-            "message": "Tüm parçalar için video başarıyla oluşturuldu."
+            "message": "Videos generated successfully for all segments."
         }
         
     if idx < 0:
@@ -209,15 +209,15 @@ def get_session_images(session_id: str, more: bool = False):
             keyword_list = current_item["search_keywords"]
             keyword_used = keyword_list[keyword_idx % len(keyword_list)]
         else:
-            keyword_used = current_item.get("sample_image") or current_item.get("turkish_translation") or current_item.get("turkish_sum", "")
+            keyword_used = current_item.get("sample_image") or current_item.get("english_translation") or current_item.get("english_sum", "")
             
-        turkish_trans = current_item.get("turkish_translation", current_item.get("turkish_sum", ""))
+        english_trans = current_item.get("english_translation", current_item.get("english_sum", ""))
 
         return {
             "status": "success",
             "index": idx,
             "keyword_used": keyword_used,
-            "turkish_translation": turkish_trans,
+            "english_translation": english_trans,
             "images": paginated_images,
             "total_cached": len(cached_images)
         }
@@ -230,9 +230,9 @@ def get_session_images(session_id: str, more: bool = False):
         keyword_list = current_item["search_keywords"]
         keyword = keyword_list[keyword_idx % len(keyword_list)]
     else:
-        keyword = current_item.get("sample_image") or current_item.get("turkish_translation") or current_item.get("turkish_sum") or current_item.get("sample_text", "")[:30]
+        keyword = current_item.get("sample_image") or current_item.get("english_translation") or current_item.get("english_sum") or current_item.get("sample_text", "")[:30]
         
-    turkish_trans = current_item.get("turkish_translation", current_item.get("turkish_sum", ""))
+    english_trans = current_item.get("english_translation", current_item.get("english_sum", ""))
         
     try:
         images = search_images(keyword)
@@ -246,13 +246,13 @@ def get_session_images(session_id: str, more: bool = False):
             "status": "success",
             "index": idx,
             "keyword_used": keyword,
-            "turkish_translation": turkish_trans,
+            "english_translation": english_trans,
             "images": paginated_images,
             "total_cached": len(images)
         }
     except Exception as e:
         logger.error(f"Error in /api/session/.../images: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Görseller aranırken bir sunucu hatası oluştu.")
+        raise HTTPException(status_code=500, detail="A server error occurred while searching for images.")
 
 
 @app.post("/api/session/{session_id}/generate_video")
@@ -278,7 +278,7 @@ def generate_video(session_id: str, req: VideoGenerationRequest):
             json_item=current_item,
             audio_path=audio_path,
             image_url=req.image_url,
-            ken_burns=False, # Devre dışı bırakıldı (kullanıcı talebi: sadece sabit görsel + ses)
+            ken_burns=False, # Disabled (user request: only static image + audio)
             zoom_direction=req.zoom_direction
         )
         
@@ -296,7 +296,7 @@ def generate_video(session_id: str, req: VideoGenerationRequest):
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         logger.error(f"Error in /api/session/.../generate_video: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Video oluşturulurken beklenmeyen bir hata meydana geldi.")
+        raise HTTPException(status_code=500, detail="An unexpected error occurred during video generation.")
 
 
 @app.post("/api/session/{session_id}/next")

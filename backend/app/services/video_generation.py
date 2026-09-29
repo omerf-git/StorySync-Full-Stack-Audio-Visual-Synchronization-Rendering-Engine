@@ -159,7 +159,7 @@ def create_segment_video(json_item, audio_path, image_path, ken_burns=False, zoo
     temp_out_path = os.path.join(temp_dir, temp_out_filename)
     
     try:
-        # KESİN ÇÖZÜM: Ken burns'ü fonksiyonun en tepesinde her ihtimale karşı False yapıyoruz
+        # ABSOLUTE FIX: Forcing Ken Burns to False at the very top just in case
         ken_burns = False
         
         if ken_burns:
@@ -217,13 +217,13 @@ def create_segment_video(json_item, audio_path, image_path, ken_burns=False, zoo
             
         else:
             # ── Frame-Aligned Duration ──
-            # audio_processing.py'de tüm start_time/end_time değerleri 1/30 katına
-            # hizalandığı için duration zaten tam bir frame katıdır.
-            # round() ile küçük kayan nokta hatalarını düzeltiyoruz.
+            # Since all start_time/end_time values in audio_processing.py are aligned to
+            # multiples of 1/30, the duration is already an exact multiple of frames.
+            # We use round() to fix minor floating point errors.
             exact_frames = round(duration * 30)
             aligned_duration = exact_frames / 30.0
             
-            # ── ADIM 1: Sesi frame-aligned sürede WAV'a çıkar ──
+            # ── STEP 1: Extract audio to WAV in frame-aligned duration ──
             temp_wav_filename = f"temp_audio_{uuid.uuid4().hex[:8]}.wav"
             temp_wav_path = os.path.join(temp_dir, temp_wav_filename)
             
@@ -243,9 +243,9 @@ def create_segment_video(json_item, audio_path, image_path, ken_burns=False, zoo
                     raise RuntimeError(f"FFmpeg WAV extraction error:\n{result.stderr[-1000:]}")
             except subprocess.TimeoutExpired:
                 subprocess.run(['pkill', '-f', temp_wav_path])
-                raise RuntimeError("Ses çıkarma işlemi zaman aşımına uğradı.")
+                raise RuntimeError("Audio extraction timed out.")
             
-            # ── ADIM 2: WAV + sabit görsel → MP4 ──
+            # ── STEP 2: Combine WAV + Static Image -> MP4 ──
             cmd = [
                 'ffmpeg', '-y',
                 '-loop', '1',
@@ -272,9 +272,9 @@ def create_segment_video(json_item, audio_path, image_path, ken_burns=False, zoo
                     raise RuntimeError(f"FFmpeg (Static Image) error:\n{result.stderr[-1000:]}")
             except subprocess.TimeoutExpired:
                 proc_kill = subprocess.run(['pkill', '-f', temp_out_path]) # Try to clean up stuck process
-                raise RuntimeError("FFmpeg işlemi çok uzun sürdü ve zaman aşımına uğradı. Görsel formatı desteklenmiyor olabilir.")
+                raise RuntimeError("FFmpeg process took too long and timed out. The image format might be unsupported.")
             
-            # WAV geçici dosyasını temizle
+            # Clean up WAV temporary file
             if os.path.exists(temp_wav_path):
                 os.remove(temp_wav_path)
             
@@ -310,7 +310,7 @@ def create_segment_from_url(json_item, audio_path, image_url, ken_burns=False, z
             response = requests.get(image_url, headers=headers, timeout=10)
             response.raise_for_status()
         except requests.exceptions.RequestException as e:
-            raise ValueError(f"Bu görselin kaynak sitesi indirmeye izin vermiyor (Güvenlik engeli). Lütfen farklı bir görsel seçin. Detay: {str(e)}")
+            raise ValueError(f"The source site for this image does not allow downloading (Security block). Please select a different image. Detail: {str(e)}")
             
         with open(temp_image_path, "wb") as f:
             f.write(response.content)

@@ -94,7 +94,7 @@ function App() {
             <span style={{ color: 'var(--text-muted)' }}>Session: {sessionData.session_id.substring(0,8)}</span>
           )}
           {view !== 'upload' && (
-            <button className="secondary" onClick={goHome} title="Ana Sayfaya Dön" style={{ padding: '0.5rem', display: 'flex', alignItems: 'center' }}>
+            <button className="secondary" onClick={goHome} title="Return to Home" style={{ padding: '0.5rem', display: 'flex', alignItems: 'center' }}>
               <Home size={18} />
             </button>
           )}

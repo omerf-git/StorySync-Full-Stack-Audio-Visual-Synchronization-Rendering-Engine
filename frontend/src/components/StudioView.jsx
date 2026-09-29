@@ -15,7 +15,7 @@ const StudioView = ({ sessionId }) => {
       const res = await axios.get(`/api/session/${sessionId}/images`);
       setData(res.data);
     } catch (err) {
-      setError(err.response?.data?.detail || 'Görseller yüklenirken hata oluştu.');
+      setError(err.response?.data?.detail || 'Error loading images.');
     } finally {
       setLoading(false);
     }
@@ -28,7 +28,7 @@ const StudioView = ({ sessionId }) => {
       const res = await axios.get(`/api/session/${sessionId}/images?more=true`);
       setData(res.data);
     } catch (err) {
-      setError(err.response?.data?.detail || 'Görseller yüklenirken hata oluştu.');
+      setError(err.response?.data?.detail || 'Error loading images.');
     } finally {
       setLoading(false);
     }
@@ -41,7 +41,7 @@ const StudioView = ({ sessionId }) => {
       const res = await axios.post(`/api/session/${sessionId}/next_keyword`);
       setData(res.data);
     } catch (err) {
-      setError(err.response?.data?.detail || 'Farklı kelime ile arama yapılamadı.');
+      setError(err.response?.data?.detail || 'Failed to search with a different keyword.');
     } finally {
       setLoading(false);
     }
@@ -57,7 +57,7 @@ const StudioView = ({ sessionId }) => {
       const res = await axios.post(`/api/session/${sessionId}/next`);
       setData(res.data);
     } catch (err) {
-      setError(err.response?.data?.detail || 'Sonraki parçaya geçilemedi.');
+      setError(err.response?.data?.detail || 'Failed to skip to next segment.');
     } finally {
       setLoading(false);
     }
@@ -69,7 +69,7 @@ const StudioView = ({ sessionId }) => {
       const res = await axios.post(`/api/session/${sessionId}/prev`);
       setData(res.data);
     } catch (err) {
-      setError(err.response?.data?.detail || 'Önceki parçaya geçilemedi.');
+      setError(err.response?.data?.detail || 'Failed to go to previous segment.');
     } finally {
       setLoading(false);
     }
@@ -102,7 +102,7 @@ const StudioView = ({ sessionId }) => {
       fetchImages();
     } catch (err) {
       console.error(err);
-      let errorMsg = 'Video oluşturulurken bir hata oluştu.';
+      let errorMsg = 'An error occurred while generating video.';
       if (err.response?.data instanceof Blob) {
         try {
           const text = await err.response.data.text();
@@ -131,9 +131,9 @@ const StudioView = ({ sessionId }) => {
   if (data?.status === 'completed') {
     return (
       <div className="card" style={{ textAlign: 'center', padding: '4rem 2rem' }}>
-        <h2 style={{ color: 'var(--success-color)' }}>Tebrikler!</h2>
+        <h2 style={{ color: 'var(--success-color)' }}>Congratulations!</h2>
         <p style={{ marginTop: '1rem', color: 'var(--text-muted)' }}>{data.message}</p>
-        <p style={{ marginTop: '0.5rem' }}>İndirilen MP4 dosyalarını video düzenleyicinizde birleştirerek belgeselinizi tamamlayabilirsiniz.</p>
+        <p style={{ marginTop: '0.5rem' }}>You can combine the downloaded MP4 files in your video editor to complete your documentary.</p>
       </div>
     );
   }
@@ -142,16 +142,16 @@ const StudioView = ({ sessionId }) => {
     <div className="card" style={{ padding: '1rem' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
         <h2 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}>
-          <Video size={24} color="var(--accent-color)" /> Stüdyo
-          <span style={{ fontSize: '1rem', color: 'var(--text-muted)', fontWeight: 400 }}>| Parça {data?.index + 1}</span>
+          <Video size={24} color="var(--accent-color)" /> Studio
+          <span style={{ fontSize: '1rem', color: 'var(--text-muted)', fontWeight: 400 }}>| Segment {data?.index + 1}</span>
         </h2>
 
         <div style={{ display: 'flex', gap: '0.5rem' }}>
           <button className="secondary" onClick={handlePrev} disabled={loading || generating || data?.index === 0}>
-            <ChevronLeft size={20} /> Önceki
+            <ChevronLeft size={20} /> Previous
           </button>
           <button className="secondary" onClick={handleNext} disabled={loading || generating}>
-            Sonraki <ChevronRight size={20} />
+            Next <ChevronRight size={20} />
           </button>
         </div>
       </div>
@@ -161,32 +161,32 @@ const StudioView = ({ sessionId }) => {
       {generating && (
         <div style={{ backgroundColor: 'rgba(201, 154, 76, 0.1)', border: '1px solid var(--accent-color)', padding: '1rem', borderRadius: '8px', marginBottom: '2rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <Loader2 className="spinner" color="var(--accent-color)" />
-          <span>Video arka planda oluşturuluyor, lütfen bekleyin... Tamamlandığında otomatik indirilecektir.</span>
+          <span>Video is being generated in the background, please wait... It will download automatically when complete.</span>
         </div>
       )}
 
       {data && (
         <>
           <div style={{ backgroundColor: 'var(--bg-color)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--border-color)', marginBottom: '1rem' }}>
-            <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Türkçe Çeviri:</div>
+            <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Translation:</div>
             <p style={{ fontSize: '1.15rem', fontWeight: 600, lineHeight: 1.4, marginBottom: '0.5rem', color: 'var(--text-color)' }}>
-              {data.turkish_translation || data.turkish_sum || "Çeviri bulunamadı"}
+              {data.english_translation || data.english_sum || "No translation found"}
             </p>
             <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: 0.7 }}>
-              <span>Arama Terimi:</span>
+              <span>Search Keyword:</span>
               <span style={{ fontStyle: 'italic' }}>{data.keyword_used}</span>
             </div>
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-            <h3 style={{ color: 'var(--text-muted)' }}>Bu parça için arka plan seçin:</h3>
+            <h3 style={{ color: 'var(--text-muted)' }}>Select a background for this segment:</h3>
             <div style={{ display: 'flex', gap: '0.5rem' }}>
               <button
                 className="secondary"
                 onClick={handleNextKeyword}
                 disabled={loading || generating}
                 style={{ padding: '0.5rem', fontSize: '1.2rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                title="Oluşturulan farklı bir anahtar kelime ile arama yap"
+                title="Search with a different generated keyword"
               >
                 🔑
               </button>
@@ -196,7 +196,7 @@ const StudioView = ({ sessionId }) => {
                   onClick={handleMoreImages}
                   disabled={loading || generating}
                   style={{ padding: '0.5rem', fontSize: '1.2rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                  title="Aynı anahtar kelime ile farklı görseller getir"
+                  title="Fetch more images with the same keyword"
                 >
                   🔄
                 </button>
@@ -212,16 +212,16 @@ const StudioView = ({ sessionId }) => {
             <div className="image-grid">
               {data.images.map((img, idx) => (
                 <div key={idx} className="image-card" onClick={() => generateVideo(img.imageUrl)}>
-                  <img src={img.imageUrl} alt={img.title || 'Seçenek'} loading="lazy" />
+                  <img src={img.imageUrl} alt={img.title || 'Option'} loading="lazy" />
                   <div className="overlay">
-                    <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>{img.source || 'Bilinmeyen Kaynak'}</div>
+                    <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>{img.source || 'Unknown Source'}</div>
                     <div style={{ color: '#ccc' }}>{img.imageWidth} x {img.imageHeight}</div>
                   </div>
                 </div>
               ))}
               {data.images.length === 0 && (
                 <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
-                  Görsel bulunamadı. Lütfen anahtar kelimeyi kontrol edin.
+                  No image found. Please check the keyword.
                 </div>
               )}
             </div>

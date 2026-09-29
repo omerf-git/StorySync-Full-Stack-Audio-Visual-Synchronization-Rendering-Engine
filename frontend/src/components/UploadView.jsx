@@ -13,20 +13,20 @@ const UploadView = ({ onComplete }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!audioFile) {
-      setError('Lütfen bir ses dosyası yükleyin.');
+      setError('Please upload an audio file.');
       return;
     }
 
     let finalScript = '';
     if (inputType === 'text') {
       if (!textContent.trim()) {
-        setError('Lütfen metni girin.');
+        setError('Please enter the text.');
         return;
       }
       finalScript = textContent;
     } else {
       if (!textFile) {
-        setError('Lütfen bir metin dosyası yükleyin.');
+        setError('Please upload a text file.');
         return;
       }
       finalScript = await textFile.text();
@@ -47,7 +47,7 @@ const UploadView = ({ onComplete }) => {
       onComplete(res.data);
     } catch (err) {
       console.error(err);
-      setError(err.response?.data?.detail || 'Analiz sırasında bir hata oluştu.');
+      setError(err.response?.data?.detail || 'An error occurred during analysis.');
     } finally {
       setLoading(false);
     }
@@ -56,7 +56,7 @@ const UploadView = ({ onComplete }) => {
   return (
     <div className="card">
       <h2 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-        <Upload size={24} /> Proje Başlat
+        <Upload size={24} /> Start Project
       </h2>
       
       {error && <div style={{ color: 'var(--error-color)', marginBottom: '1rem' }}>{error}</div>}
@@ -64,7 +64,7 @@ const UploadView = ({ onComplete }) => {
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
         
         <div>
-          <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>1. Ses Dosyası (MP3/WAV)</label>
+          <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>1. Audio File (MP3/WAV)</label>
           <input 
             type="file" 
             accept="audio/*" 
@@ -74,21 +74,21 @@ const UploadView = ({ onComplete }) => {
         </div>
 
         <div>
-          <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>2. Metin İçeriği</label>
+          <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>2. Text Content</label>
           
           <div className="tabs">
             <div className={`tab ${inputType === 'text' ? 'active' : ''}`} onClick={() => setInputType('text')}>
-              Kopyala / Yapıştır
+              Copy / Paste
             </div>
             <div className={`tab ${inputType === 'file' ? 'active' : ''}`} onClick={() => setInputType('file')}>
-              .txt Dosyası Yükle
+              Upload .txt File
             </div>
           </div>
 
           {inputType === 'text' ? (
             <textarea 
               rows="6" 
-              placeholder="Hikaye veya belgesel metninizi buraya yapıştırın..."
+              placeholder="Paste your story or documentary script here..."
               value={textContent}
               onChange={(e) => setTextContent(e.target.value)}
               disabled={loading}
@@ -105,9 +105,9 @@ const UploadView = ({ onComplete }) => {
 
         <button type="submit" disabled={loading} style={{ marginTop: '1rem', width: '100%' }}>
           {loading ? (
-            <><Loader2 className="spinner" /> Analiz Ediliyor...</>
+            <><Loader2 className="spinner" /> Analyzing...</>
           ) : (
-            'Analizi Başlat'
+            'Start Analysis'
           )}
         </button>
       </form>
