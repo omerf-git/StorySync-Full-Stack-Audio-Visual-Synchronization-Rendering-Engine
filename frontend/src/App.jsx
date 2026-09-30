@@ -37,10 +37,24 @@ function App() {
     setView('studio');
   };
 
-  const goHome = () => {
-    localStorage.removeItem('sessionId');
-    setSessionData(null);
-    setView('upload');
+  const goHome = async () => {
+    const confirmMsg = language === 'tr' 
+      ? "Ana sayfaya dönmek istediğinizden emin misiniz? Tüm ilerlemeleriniz tamamen silinecek!" 
+      : "Are you sure you want to return to the homepage? All progress will be lost!";
+      
+    if (window.confirm(confirmMsg)) {
+      const savedSessionId = localStorage.getItem('sessionId');
+      if (savedSessionId) {
+        try {
+          await fetch(`/api/session/${savedSessionId}`, { method: 'DELETE' });
+        } catch (e) {
+          console.error("Failed to delete session on backend", e);
+        }
+      }
+      localStorage.removeItem('sessionId');
+      setSessionData(null);
+      setView('upload');
+    }
   };
 
   return (
@@ -72,7 +86,7 @@ function App() {
 
       <main className="fade-enter">
         {view === 'upload' && <UploadView onComplete={handleAnalysisComplete} language={language} />}
-        {view === 'studio' && <StudioView sessionId={sessionData.session_id} language={language} />}
+        {view === 'studio' && <StudioView sessionId={sessionData.session_id} language={language} onGoHome={goHome} />}
       </main>
     </div>
   );

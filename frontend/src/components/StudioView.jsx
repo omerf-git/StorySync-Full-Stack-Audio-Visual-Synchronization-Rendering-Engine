@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { ChevronRight, ChevronLeft, Video, Loader2, Download } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Video, Loader2, Download, Home } from 'lucide-react';
 
-const StudioView = ({ sessionId, language = 'en' }) => {
+const StudioView = ({ sessionId, language = 'en', onGoHome }) => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
@@ -130,10 +130,32 @@ const StudioView = ({ sessionId, language = 'en' }) => {
 
   if (data?.status === 'completed') {
     return (
-      <div className="card" style={{ textAlign: 'center', padding: '4rem 2rem' }}>
-        <h2 style={{ color: 'var(--success-color)' }}>{language === 'tr' ? 'Tebrikler!' : 'Congratulations!'}</h2>
-        <p style={{ marginTop: '1rem', color: 'var(--text-muted)' }}>{data.message}</p>
-        <p style={{ marginTop: '0.5rem' }}>{language === 'tr' ? 'İndirilen MP4 dosyalarını video düzenleyicinizde birleştirerek belgeselinizi tamamlayabilirsiniz.' : 'You can combine the downloaded MP4 files in your video editor to complete your documentary.'}</p>
+      <div className="card fade-enter" style={{ textAlign: 'center', padding: '4rem 2rem', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <h2 style={{ color: 'var(--success-color)', fontSize: '2.5rem', marginBottom: '1rem' }}>{language === 'tr' ? 'Tebrikler!' : 'Congratulations!'}</h2>
+        <p style={{ fontSize: '1.2rem', color: 'var(--text-color)', marginBottom: '1rem' }}>{data.message}</p>
+        <p style={{ color: 'var(--text-muted)', marginBottom: '3rem', maxWidth: '600px' }}>
+          {language === 'tr' 
+            ? 'İndirilen MP4 dosyalarını video düzenleyicinizde birleştirerek belgeselinizi tamamlayabilirsiniz.' 
+            : 'You can combine the downloaded MP4 files in your video editor to complete your documentary.'}
+        </p>
+        
+        <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+          <button 
+            className="secondary" 
+            onClick={handlePrev} 
+            style={{ padding: '1rem 2rem', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+          >
+            <ChevronLeft size={24} /> {language === 'tr' ? 'Önceki Görsel Aramaya Dön' : 'Return to Previous Search'}
+          </button>
+          
+          <button 
+            className="primary" 
+            onClick={onGoHome} 
+            style={{ padding: '1rem 2rem', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', backgroundColor: 'var(--error-color)', color: 'white' }}
+          >
+            <Home size={24} /> {language === 'tr' ? 'Ana Sayfaya Dön' : 'Return to Homepage'}
+          </button>
+        </div>
       </div>
     );
   }

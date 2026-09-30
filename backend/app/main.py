@@ -1,4 +1,5 @@
 import os
+import time
 import uuid
 import tempfile
 import shutil
@@ -56,6 +57,24 @@ def healthcheck():
 # }
 sessions = {}
 
+def cleanup_old_sessions():
+    """Removes sessions inactive for more than 2 hours and deletes their files."""
+    current_time = time.time()
+    expired = []
+    for sid, s in sessions.items():
+        if current_time - s.get("last_activity", current_time) > 2 * 3600:
+            expired.append(sid)
+            
+    for sid in expired:
+        audio_path = sessions[sid].get("audio_path")
+        if audio_path and os.path.exists(audio_path):
+            try:
+                os.remove(audio_path)
+            except:
+                pass
+        del sessions[sid]
+        logger.info(f"Session {sid} deleted due to 2 hours of inactivity.")
+
 class VideoGenerationRequest(BaseModel):
     image_url: str
     ken_burns: bool = True
@@ -68,6 +87,7 @@ def analyze_audio(
     global_context: str = Form(""),
     audio: UploadFile = File(...)
 ):
+    cleanup_old_sessions()
     try:
         # 1. Generate JSON from text
         if not os.path.exists(system_prompt_path):
@@ -101,7 +121,8 @@ def analyze_audio(
             "image_offset": {},
             "keyword_index": {},
             "transcript_words": transcript_words,
-            "confirmed": True
+            "confirmed": True,
+            "last_activity": time.time()
         }
 
         return {
@@ -123,6 +144,7 @@ def get_session(session_id: str):
         raise HTTPException(status_code=404, detail="Session not found")
         
     session = sessions[session_id]
+    session["last_activity"] = time.time()
     return {
         "status": "success",
         "session_id": session_id,
@@ -170,6 +192,7 @@ def get_session_images(session_id: str, background_tasks: BackgroundTasks, more:
         raise HTTPException(status_code=404, detail="Session not found")
         
     session = sessions[session_id]
+    session["last_activity"] = time.time()
     if not session.get("confirmed", False):
         raise HTTPException(status_code=400, detail="Session timestamps have not been confirmed yet.")
         
@@ -314,10 +337,8 @@ def next_segment(session_id: str, background_tasks: BackgroundTasks):
         raise HTTPException(status_code=404, detail="Session not found")
         
     session = sessions[session_id]
-    if session["current_index"] < len(session["json_data"]) - 1:
+    if session["current_index"] < len(session["json_data"]):
         session["current_index"] += 1
-    else:
-        return {"status": "success", "message": "Already at the last segment", "index": session["current_index"]}
         
     return get_session_images(session_id, background_tasks=background_tasks)
 
@@ -330,8 +351,6 @@ def prev_segment(session_id: str, background_tasks: BackgroundTasks):
     session = sessions[session_id]
     if session["current_index"] > 0:
         session["current_index"] -= 1
-    else:
-        return {"status": "success", "message": "Already at the first segment", "index": session["current_index"]}
         
     return get_session_images(session_id, background_tasks=background_tasks)
 
@@ -353,3 +372,17 @@ def next_keyword(session_id: str, background_tasks: BackgroundTasks):
         del session["image_cache"][idx]
         
     return get_session_images(session_id, background_tasks=background_tasks)
+
+
+@app.delete("/api/session/{session_id}")
+def delete_session(session_id: str):
+    if session_id in sessions:
+        audio_path = sessions[session_id].get("audio_path")
+        if audio_path and os.path.exists(audio_path):
+            try:
+                os.remove(audio_path)
+            except:
+                pass
+        del sessions[session_id]
+        logger.info(f"Session {session_id} explicitly deleted by user.")
+    return {"status": "success", "message": "Session deleted."}
