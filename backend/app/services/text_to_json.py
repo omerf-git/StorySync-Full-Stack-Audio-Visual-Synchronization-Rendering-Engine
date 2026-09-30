@@ -31,12 +31,12 @@ def generate_json_from_text(system_prompt_path, text, global_context=""):
     # Fallback list of models (user requested list)
     fallback_models = [
         # 1. Most up-to-date and capable Flash models (may give temporary errors during peak times, but preferred)
-        "gemini-3.8-flash",
-        "gemini-3.7-flash",
-        "gemini-3.6-flash",
-        "gemini-3.5-flash",
+        # "gemini-3.8-flash",
+        # "gemini-3.7-flash",
+        # "gemini-3.6-flash",
+        # "gemini-3.5-flash",
         # 2. Dynamic "Latest" models (always points to the latest stable version)
-        "gemini-flash-latest",
+        # "gemini-flash-latest",
         # 3. High-speed / Lightweight models (very fast and effective for JSON extraction)
         "gemini-3.5-flash-lite",
         "gemini-3.1-flash-lite",

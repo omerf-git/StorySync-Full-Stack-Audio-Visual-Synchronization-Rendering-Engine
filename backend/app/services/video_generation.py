@@ -5,6 +5,54 @@ import tempfile
 import uuid
 import math
 import numpy as np
+import logging
+
+logger = logging.getLogger(__name__)
+
+# Detect GPU encoder availability at module load time
+_GPU_ENCODER = None
+
+def _detect_gpu_encoder():
+    """Check if NVIDIA NVENC encoder is available in FFmpeg."""
+    global _GPU_ENCODER
+    if _GPU_ENCODER is not None:
+        return _GPU_ENCODER
+    
+    try:
+        result = subprocess.run(
+            ['ffmpeg', '-encoders'],
+            capture_output=True, text=True, timeout=5
+        )
+        if 'h264_nvenc' in result.stdout:
+            # Verify it actually works by doing a quick test encode
+            test_cmd = [
+                'ffmpeg', '-y', '-f', 'lavfi', '-i',
+                'color=c=black:s=64x64:d=0.1:r=30',
+                '-c:v', 'h264_nvenc', '-f', 'null', '-'
+            ]
+            test_result = subprocess.run(test_cmd, capture_output=True, text=True, timeout=5)
+            if test_result.returncode == 0:
+                _GPU_ENCODER = 'h264_nvenc'
+                logger.info("GPU encoder detected: h264_nvenc (NVIDIA NVENC)")
+            else:
+                _GPU_ENCODER = 'libx264'
+                logger.info("h264_nvenc found but not functional, falling back to libx264 (CPU)")
+        else:
+            _GPU_ENCODER = 'libx264'
+            logger.info("No GPU encoder found, using libx264 (CPU)")
+    except Exception:
+        _GPU_ENCODER = 'libx264'
+        logger.info("GPU encoder detection failed, using libx264 (CPU)")
+    
+    return _GPU_ENCODER
+
+def _get_encoder_args():
+    """Return FFmpeg encoder arguments based on available hardware."""
+    encoder = _detect_gpu_encoder()
+    if encoder == 'h264_nvenc':
+        return ['-c:v', 'h264_nvenc', '-preset', 'p4', '-rc', 'vbr', '-cq', '18']
+    else:
+        return ['-c:v', 'libx264', '-preset', 'fast', '-crf', '18']
 
 def _get_focal_point(img_path):
     img = cv2.imread(img_path)
@@ -62,10 +110,11 @@ def _build_segment_cpu(
     
     img_rsz = cv2.resize(img, (rw, rh), interpolation=cv2.INTER_LANCZOS4)
     
+    encoder_args = _get_encoder_args()
     cmd = [
         ffmpeg_bin, "-y", "-f", "rawvideo", "-pix_fmt", "bgr24",
         "-s", f"{out_w}x{out_h}", "-r", str(fps), "-i", "-",
-        "-c:v", "libx264", "-preset", "fast", "-crf", "18",
+    ] + encoder_args + [
         "-pix_fmt", "yuv420p", segment_path,
     ]
     
@@ -246,6 +295,7 @@ def create_segment_video(json_item, audio_path, image_path, ken_burns=False, zoo
                 raise RuntimeError("Audio extraction timed out.")
             
             # ── STEP 2: Combine WAV + Static Image -> MP4 ──
+            encoder_args = _get_encoder_args()
             cmd = [
                 'ffmpeg', '-y',
                 '-loop', '1',
@@ -255,9 +305,7 @@ def create_segment_video(json_item, audio_path, image_path, ken_burns=False, zoo
                 '-map', '0:v',
                 '-map', '1:a',
                 '-vf', 'scale=trunc(iw/2)*2:trunc(ih/2)*2',
-                '-c:v', 'libx264',
-                '-preset', 'fast',
-                '-crf', '18',
+            ] + encoder_args + [
                 '-pix_fmt', 'yuv420p',
                 '-c:a', 'aac',
                 '-b:a', '192k',
@@ -272,7 +320,7 @@ def create_segment_video(json_item, audio_path, image_path, ken_burns=False, zoo
                     raise RuntimeError(f"FFmpeg (Static Image) error:\n{result.stderr[-1000:]}")
             except subprocess.TimeoutExpired:
                 proc_kill = subprocess.run(['pkill', '-f', temp_out_path]) # Try to clean up stuck process
-                raise RuntimeError("FFmpeg process took too long and timed out. The image format might be unsupported.")
+                raise RuntimeError("FFmpeg process took too long and timed out (120s). The image may be corrupted or too large.")
             
             # Clean up WAV temporary file
             if os.path.exists(temp_wav_path):
@@ -297,6 +345,8 @@ def create_segment_video(json_item, audio_path, image_path, ken_burns=False, zoo
 def create_segment_from_url(json_item, audio_path, image_url, ken_burns=False, zoom_direction="in"):
     import requests
     temp_dir = tempfile.gettempdir()
+    temp_raw_filename = f"temp_raw_{uuid.uuid4().hex[:8]}"
+    temp_raw_path = os.path.join(temp_dir, temp_raw_filename)
     temp_image_filename = f"temp_image_{uuid.uuid4().hex[:8]}.jpg"
     temp_image_path = os.path.join(temp_dir, temp_image_filename)
     
@@ -311,9 +361,25 @@ def create_segment_from_url(json_item, audio_path, image_url, ken_burns=False, z
             response.raise_for_status()
         except requests.exceptions.RequestException as e:
             raise ValueError(f"The source site for this image does not allow downloading (Security block). Please select a different image. Detail: {str(e)}")
-            
-        with open(temp_image_path, "wb") as f:
+        
+        # Check if response is actually an image (not HTML error page)
+        content_type = response.headers.get('Content-Type', '')
+        if 'text/html' in content_type:
+            raise ValueError("The URL returned an HTML page instead of an image. Please select a different image.")
+        
+        # Save raw bytes first
+        with open(temp_raw_path, "wb") as f:
             f.write(response.content)
+        
+        # Validate and convert to proper JPEG using OpenCV
+        # This handles WebP, PNG, BMP, TIFF, etc. and ensures FFmpeg gets a clean JPEG
+        img = cv2.imread(temp_raw_path, cv2.IMREAD_COLOR)
+        if img is None:
+            raise ValueError("Downloaded file is not a valid image or the format is unsupported. Please select a different image.")
+        
+        # Write as proper JPEG
+        cv2.imwrite(temp_image_path, img, [cv2.IMWRITE_JPEG_QUALITY, 95])
+        logger.info(f"Image validated and converted to JPEG: {img.shape[1]}x{img.shape[0]}")
             
         # Create video
         return create_segment_video(
@@ -324,9 +390,10 @@ def create_segment_from_url(json_item, audio_path, image_url, ken_burns=False, z
             zoom_direction=zoom_direction
         )
     finally:
-        # Clean up temporary image
-        if os.path.exists(temp_image_path):
-            os.remove(temp_image_path)
+        # Clean up temporary files
+        for path in [temp_raw_path, temp_image_path]:
+            if os.path.exists(path):
+                os.remove(path)
 
 # if __name__ == "__main__":
 #     import json

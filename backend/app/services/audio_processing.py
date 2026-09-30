@@ -15,28 +15,33 @@ def clean_text(text):
     text = re.sub(f'[{re.escape(string.punctuation)}]', '', text)
     return text.strip()
 
-def find_timestamp_for_text(sample_text, transcript_words):
+def find_timestamp_for_text(sample_text, transcript_words, cleaned_transcript, search_start_idx=0):
     """
     Finds the best matching word group using a sliding window algorithm
-    and returns the start/end times.
+    and returns the start/end times. Uses search_start_idx to avoid full scans.
     """
     sample_words = [clean_text(w) for w in sample_text.split() if clean_text(w)]
     n = len(sample_words)
     if n == 0:
-        return None, None, 0.0, "", []
+        return None, None, 0.0, "", [], search_start_idx
     
     best_ratio = 0
     best_start = None
     best_end = None
     best_matched_words_raw = []
+    best_matched_idx = search_start_idx
     
     sample_str = " ".join(sample_words)
     
-    # Define sliding window range
-    for i in range(len(transcript_words)):
-        for j in range(i + max(1, n - 3), min(len(transcript_words) + 1, i + n + 4)):
+    # We restrict our search window to a reasonable range ahead of the last matched position
+    # (e.g. up to 1000 words ahead) to avoid scanning the entire document.
+    search_end_idx = min(len(transcript_words), search_start_idx + 1000)
+    
+    for i in range(search_start_idx, search_end_idx):
+        for j in range(i + max(1, n - 3), min(search_end_idx + 1, i + n + 4)):
             window = transcript_words[i:j]
-            window_str = " ".join([clean_text(w['word']) for w in window if clean_text(w['word'])])
+            window_clean = cleaned_transcript[i:j]
+            window_str = " ".join([w for w in window_clean if w])
             
             # Find similarity ratio with difflib
             ratio = difflib.SequenceMatcher(None, window_str, sample_str).ratio()
@@ -46,6 +51,7 @@ def find_timestamp_for_text(sample_text, transcript_words):
                 best_start = window[0]['start']
                 best_end = window[-1]['end']
                 best_matched_words_raw = window
+                best_matched_idx = j # The index where this match ends
                 
     best_matched_text = " ".join([w['word'] for w in best_matched_words_raw])
     
@@ -62,14 +68,23 @@ def find_timestamp_for_text(sample_text, transcript_words):
                 # Note: i1, i2 indices belong to sample_words (punctuation-free list).
                 mismatched_words.extend(sample_words[i1:i2])
                 
-    return best_start, best_end, best_ratio, best_matched_text, mismatched_words
+    return best_start, best_end, best_ratio, best_matched_text, mismatched_words, best_matched_idx
 
 def get_transcript_words(audio_path, model_name="small"):
-    print(f"Loading Whisper '{model_name}' model...")
-    model = whisper.load_model(model_name)
+    import torch
+    
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    print(f"Loading Whisper '{model_name}' model on {device.upper()}...")
+    model = whisper.load_model(model_name, device=device)
     
     print(f"Analyzing audio file '{audio_path}' (this may take a while)...")
     result = model.transcribe(audio_path, word_timestamps=True)
+    
+    # Release GPU VRAM after transcription
+    del model
+    if device == "cuda":
+        torch.cuda.empty_cache()
+        print("Whisper model unloaded, GPU VRAM released.")
     
     transcript_words = []
     for segment in result.get('segments', []):
@@ -82,10 +97,21 @@ def get_transcript_words(audio_path, model_name="small"):
     return transcript_words
 
 def evaluate_timestamps(data, transcript_words):
+    # Precompute cleaned text for the entire transcript once to save massive CPU time
+    cleaned_transcript = [clean_text(w['word']) for w in transcript_words]
+    
+    search_idx = 0
     for item in data:
         sample_text = item.get('sample_text', '')
         if sample_text:
-            start_time, end_time, match_ratio, matched_text, mismatched_words = find_timestamp_for_text(sample_text, transcript_words)
+            start_time, end_time, match_ratio, matched_text, mismatched_words, new_search_idx = find_timestamp_for_text(
+                sample_text, transcript_words, cleaned_transcript, search_start_idx=search_idx
+            )
+            
+            # If we found a decent match, update our search index so the next segment doesn't start from the beginning
+            if match_ratio > 0.4:
+                # We move slightly back just in case there's overlap in segments
+                search_idx = max(0, new_search_idx - 5)
             
             item['match_ratio'] = round(match_ratio, 3) if match_ratio else 0.0
             
@@ -105,6 +131,11 @@ def evaluate_timestamps(data, transcript_words):
                 item['match_status'] = 3
                 item['matched_whisper_text'] = ""
                 item['mismatched_words'] = [w for w in sample_text.split()]
+        else:
+            item['match_ratio'] = 0.0
+            item['match_status'] = 3
+            item['matched_whisper_text'] = ""
+            item['mismatched_words'] = []
                 
     # --- GAP BRIDGING ---
     for i in range(len(data) - 1):
