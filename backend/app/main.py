@@ -133,8 +133,39 @@ def get_session(session_id: str):
 
 
 
+def _prefetch_next_segment(session_id: str, next_idx: int):
+    """Background task: search images for the next segment and cache them."""
+    if session_id not in sessions:
+        return
+    
+    session = sessions[session_id]
+    json_data = session["json_data"]
+    
+    # Don't prefetch if already cached or out of bounds
+    if next_idx >= len(json_data) or next_idx in session["image_cache"]:
+        return
+    
+    next_item = json_data[next_idx]
+    
+    # Use the first keyword (index 0) for prefetch
+    if "search_keywords" in next_item and isinstance(next_item["search_keywords"], list) and len(next_item["search_keywords"]) > 0:
+        keyword = next_item["search_keywords"][0]
+    else:
+        keyword = next_item.get("sample_image") or next_item.get("english_translation") or next_item.get("english_sum") or next_item.get("sample_text", "")[:30]
+    
+    try:
+        images = search_images(keyword)
+        # Only cache if session still exists and index is still not cached
+        if session_id in sessions and next_idx not in sessions[session_id]["image_cache"]:
+            sessions[session_id]["image_cache"][next_idx] = images
+            sessions[session_id]["image_offset"][next_idx] = 0
+            logger.info(f"Prefetched {len(images)} images for segment {next_idx + 1} (keyword: '{keyword}')")
+    except Exception as e:
+        logger.warning(f"Prefetch failed for segment {next_idx + 1}: {e}")
+
+
 @app.get("/api/session/{session_id}/images")
-def get_session_images(session_id: str, more: bool = False):
+def get_session_images(session_id: str, background_tasks: BackgroundTasks, more: bool = False):
     if session_id not in sessions:
         raise HTTPException(status_code=404, detail="Session not found")
         
@@ -180,6 +211,10 @@ def get_session_images(session_id: str, more: bool = False):
         english_trans = current_item.get("english_translation", current_item.get("english_sum", ""))
         turkish_trans = current_item.get("turkish_translation", current_item.get("turkish_sum", ""))
 
+        # Prefetch next segment in the background
+        if idx + 1 < len(json_data):
+            background_tasks.add_task(_prefetch_next_segment, session_id, idx + 1)
+
         return {
             "status": "success",
             "index": idx,
@@ -210,6 +245,10 @@ def get_session_images(session_id: str, more: bool = False):
         session["image_offset"][idx] = 0
         
         paginated_images = images[0:4]
+        
+        # Prefetch next segment in the background
+        if idx + 1 < len(json_data):
+            background_tasks.add_task(_prefetch_next_segment, session_id, idx + 1)
         
         return {
             "status": "success",
@@ -270,7 +309,7 @@ def generate_video(session_id: str, req: VideoGenerationRequest):
 
 
 @app.post("/api/session/{session_id}/next")
-def next_segment(session_id: str):
+def next_segment(session_id: str, background_tasks: BackgroundTasks):
     if session_id not in sessions:
         raise HTTPException(status_code=404, detail="Session not found")
         
@@ -280,11 +319,11 @@ def next_segment(session_id: str):
     else:
         return {"status": "success", "message": "Already at the last segment", "index": session["current_index"]}
         
-    return get_session_images(session_id)
+    return get_session_images(session_id, background_tasks=background_tasks)
 
 
 @app.post("/api/session/{session_id}/prev")
-def prev_segment(session_id: str):
+def prev_segment(session_id: str, background_tasks: BackgroundTasks):
     if session_id not in sessions:
         raise HTTPException(status_code=404, detail="Session not found")
         
@@ -294,10 +333,10 @@ def prev_segment(session_id: str):
     else:
         return {"status": "success", "message": "Already at the first segment", "index": session["current_index"]}
         
-    return get_session_images(session_id)
+    return get_session_images(session_id, background_tasks=background_tasks)
 
 @app.post("/api/session/{session_id}/next_keyword")
-def next_keyword(session_id: str):
+def next_keyword(session_id: str, background_tasks: BackgroundTasks):
     if session_id not in sessions:
         raise HTTPException(status_code=404, detail="Session not found")
         
@@ -313,4 +352,4 @@ def next_keyword(session_id: str):
     if idx in session["image_cache"]:
         del session["image_cache"][idx]
         
-    return get_session_images(session_id)
+    return get_session_images(session_id, background_tasks=background_tasks)
