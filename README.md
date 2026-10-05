@@ -14,6 +14,10 @@
 
 It takes an audio recording and text input, segments the text using AI, aligns the text with audio via Whisper, automatically searches Google Images, and produces **perfectly lip-synced MP4 video segments** for each part.
 
+<p align="center">
+  <img src="diagram.gif" alt="StorySync Architecture & Flow" width="800"/>
+</p>
+
 ---
 
 ## 📋 Table of Contents
