@@ -62,7 +62,7 @@ function App() {
       <header className="header">
         <h1 style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '1.5rem', margin: 0 }}>
           <Film color="var(--accent-color)" size={24} />
-          <span>Google Images to Video</span>
+          <span>StorySync</span>
         </h1>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           {sessionData && (

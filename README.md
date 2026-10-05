@@ -8,7 +8,7 @@
   <img src="https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge" alt="License">
 </p>
 
-# 🎬 Google Images to Video
+# 🎬 StorySync: Full-Stack Audio-Visual Synchronization & Rendering Engine
 
 **A full-stack application that transforms text-based documentary/storytelling scripts into professional video segments using AI-powered image search and audio synchronization.**
 
@@ -124,8 +124,8 @@ sudo nvidia-ctk runtime configure --runtime=docker
 sudo systemctl restart docker
 
 # 2. Clone the project
-git clone https://github.com/YOUR_USERNAME/google_images_to_video.git
-cd google_images_to_video
+git clone https://github.com/omerf-git/StorySync-Full-Stack-Audio-Visual-Synchronization-Rendering-Engine.git
+cd StorySync-Full-Stack-Audio-Visual-Synchronization-Rendering-Engine
 
 # 3. Setup API keys
 cp backend/.env.example backend/.env
@@ -213,7 +213,7 @@ SERPER_API_KEY=your_serper_api_key_here
 ## 📁 Project Structure
 
 ```
-google_images_to_video/
+StorySync/
 ├── backend/
 │   ├── app/
 │   │   ├── main.py                 # FastAPI endpoints & session management

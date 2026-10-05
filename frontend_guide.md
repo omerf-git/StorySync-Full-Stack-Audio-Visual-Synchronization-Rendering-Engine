@@ -1,6 +1,6 @@
 # Frontend Usage & API Integration Guide
 
-Welcome to the frontend development guide for the **Google Images to Video** backend API. This guide outlines how to consume the REST API to build a reliable and robust frontend client.
+Welcome to the frontend development guide for the **StorySync** backend API. This guide outlines how to consume the REST API to build a reliable and robust frontend client.
 
 ## Overview
 The API is built with FastAPI and follows a session-based architecture. A typical generation pipeline consists of 4 main phases:

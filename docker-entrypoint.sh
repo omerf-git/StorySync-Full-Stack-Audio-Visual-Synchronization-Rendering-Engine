@@ -2,7 +2,7 @@
 set -e
 
 echo "============================================"
-echo "  Google Images to Video - Starting..."
+echo "  StorySync - Starting..."
 echo "============================================"
 
 # Copy .env file to backend working directory (if exists)

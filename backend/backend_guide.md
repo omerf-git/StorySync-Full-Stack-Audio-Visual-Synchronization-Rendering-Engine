@@ -1,6 +1,6 @@
 # Backend Architecture & Development Guide
 
-This document is a comprehensive developer and user guide that explains the backend architecture, directory structure, and instructions for integrating new features into the **Google Images to Video** project.
+This document is a comprehensive developer and user guide that explains the backend architecture, directory structure, and instructions for integrating new features into the **StorySync** project.
 
 ## 1. Directory Structure
 The backend is structured using a professional, modular FastAPI architecture.

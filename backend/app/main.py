@@ -36,7 +36,7 @@ logger = logging.getLogger(__name__)
 # We need to setup gemini at startup
 setup_gemini_api()
 
-app = FastAPI(title="Google Images to Video Backend")
+app = FastAPI(title="StorySync Backend")
 
 @app.get("/")
 def read_root():
